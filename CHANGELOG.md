@@ -100,6 +100,8 @@ PATCH - Bug fixes, documentation
 
 ## Upcoming
 
+See [ROADMAP.md](./ROADMAP.md) for full details.
+
 ### [v1.1.0] - Planned
 
 - [ ] Watch mode (`palace watch`)
@@ -108,9 +110,15 @@ PATCH - Bug fixes, documentation
 - [ ] Custom pattern registration
 - [ ] Flow templates
 
-### [v2.0.0] - Future
+### [v1.2.0] - Future
 
 - [ ] Multi-project genomes
 - [ ] LLM provider integrations
 - [ ] Real-time sync
-- [ ] Web UI
+
+### [v2.0.0] - Platform
+
+- [ ] Web dashboard
+- [ ] Cloud sync
+- [ ] API server
+- [ ] IDE extensions

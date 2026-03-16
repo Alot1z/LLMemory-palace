@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
-**[📦 npm](https://www.npmjs.com/package/llmemory-palace)** • **[📖 Docs](./wiki/Home.md)** • **[🐛 Issues](https://github.com/Alot1z/LLMemory-palace/issues)**
+**[📦 npm](https://www.npmjs.com/package/llmemory-palace)** • **[📖 Docs](./wiki/Home.md)** • **[🗺️ Roadmap](./ROADMAP.md)** • **[🐛 Issues](https://github.com/Alot1z/LLMemory-palace/issues)**
 
 ---
 
