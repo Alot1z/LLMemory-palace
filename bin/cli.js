@@ -15,6 +15,7 @@ import { GenomeEncoder, safeGenomeParse, executeGenome } from '../lib/genome.js'
 import { PatternLibrary } from '../lib/patterns.js';
 import { BehaviorGraph } from '../lib/flows.js';
 import { Reconstructor } from '../lib/reconstructor.js';
+import { Refresher } from '../lib/refresh.js';
 import {
   validatePath,
   validateCommand,
@@ -120,6 +121,17 @@ const commands = {
     console.log('  status            Show palace status');
     console.log('  query             Interactive LLM query mode');
     console.log('  validate          Validate genome file (security check)');
+    console.log('  refresh <file>    Incremental update with parallel chain logic');
+    console.log('  llm-export        Export optimized for LLM context windows');
+    console.log(chalk.bold('\nLLM-Export Options:'));
+    console.log('  --max-tokens, -t  Max tokens per chunk (default: 128000)');
+    console.log('  --format, -f      Output format (md|json)');
+    console.log('  --split, -s       Split into chunks for context windows');
+    console.log('  --overlap, -o     Token overlap between chunks (default: 200)');
+    console.log(chalk.bold('\nRefresh Options:'));
+    console.log('  --ripple, -r      Update related/affected files');
+    console.log('  --dry-run, -d     Preview changes without applying');
+    console.log('  --metrics, -m     Show quality metrics before/after');
     console.log(chalk.bold('\nOptions:'));
     console.log('  --output, -o      Output file/directory path');
     console.log('  --format, -f      Output format (cxml|json|genome)');
@@ -582,6 +594,182 @@ const commands = {
     } catch (error) {
       handleError(error);
     }
+  },
+
+  refresh: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      const target = args.find(a => !a.startsWith('--') && a !== 'refresh');
+      
+      if (!target) {
+        console.log(chalk.red('Error: Specify target file or pattern'));
+        console.log(chalk.gray('Usage: palace refresh <file|pattern> [--ripple] [--dry-run] [--metrics]'));
+        console.log(chalk.gray(''));
+        console.log(chalk.gray('Options:'));
+        console.log(chalk.gray('  --ripple, -r    Update files affected by this change'));
+        console.log(chalk.gray('  --dry-run, -d   Preview changes without applying'));
+        console.log(chalk.gray('  --metrics, -m   Show quality metrics before/after'));
+        process.exit(1);
+      }
+      
+      const options = validateCommand('refresh', {
+        target,
+        ripple: args.includes('--ripple') || args.includes('-r'),
+        dryRun: args.includes('--dry-run') || args.includes('-d'),
+        metrics: args.includes('--metrics') || args.includes('-m'),
+        parallel: !args.includes('--sequential')
+      });
+      
+      const palace = new Palace(process.cwd());
+      const refresher = new Refresher(palace);
+      
+      console.log(chalk.blue('Refreshing:'), options.target);
+      if (options.ripple) {
+        console.log(chalk.gray('  Mode: Ripple (updating related files)'));
+      }
+      if (options.dryRun) {
+        console.log(chalk.yellow('  Mode: Dry run (no changes will be applied)'));
+      }
+      
+      const startTime = Date.now();
+      const result = await refresher.refresh(options.target, options);
+      const duration = Date.now() - startTime;
+      
+      // Output report
+      console.log(chalk.green('\n✓ Refresh complete'));
+      console.log(chalk.gray(`  Duration: ${duration}ms`));
+      console.log(chalk.gray(`  Targets: ${result.targets}`));
+      console.log(chalk.gray(`  Affected: ${result.affected} files`));
+      console.log(chalk.gray(`  Changes: ${result.changes}`));
+      
+      if (options.dryRun) {
+        console.log(chalk.yellow('\n⚠ DRY RUN - No changes applied'));
+      }
+      
+      if (result.metrics) {
+        console.log(chalk.cyan('\n📊 Metrics:'));
+        for (const [name, data] of Object.entries(result.metrics)) {
+          const arrow = data.change >= 0 ? '↑' : '↓';
+          const color = data.change >= 0 ? chalk.green : chalk.red;
+          console.log(chalk.gray(`  ${name}: ${data.before.toFixed(2)} → ${data.after.toFixed(2)} ${color(arrow + Math.abs(data.percentChange) + '%')}`));
+        }
+      }
+      
+      if (result.recommendations?.length > 0) {
+        console.log(chalk.yellow('\n💡 Recommendations:'));
+        result.recommendations.forEach(r => console.log(chalk.gray(`  • ${r}`)));
+      }
+      
+      if (result.files?.affected?.length > 0 && options.ripple) {
+        console.log(chalk.blue('\n🔗 Affected files (ripple):'));
+        result.files.affected.slice(0, 10).forEach(f => 
+          console.log(chalk.gray(`  • ${f}`))
+        );
+        if (result.files.affected.length > 10) {
+          console.log(chalk.gray(`  ... and ${result.files.affected.length - 10} more`));
+        }
+      }
+      
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
+  llmExport: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      // Parse options
+      const outputArg = getArg(['--output', '-o']) || 'llm-export';
+      const formatArg = getArg(['--format', '-f']) || 'md';
+      const maxTokensArg = getArg(['--max-tokens', '-t']) || '128000';
+      const overlapArg = getArg(['--overlap']) || '200';
+      const split = args.includes('--split') || args.includes('-s');
+      
+      const maxTokens = parseInt(maxTokensArg, 10);
+      const overlap = parseInt(overlapArg, 10);
+      
+      // Validate format
+      if (!['md', 'json'].includes(formatArg)) {
+        console.log(chalk.red('Error: Format must be "md" or "json"'));
+        process.exit(1);
+      }
+      
+      const palace = new Palace(process.cwd());
+      
+      console.log(chalk.cyan('📦 Exporting for LLM consumption...\n'));
+      console.log(chalk.gray(`  Max tokens: ${maxTokens.toLocaleString()}`));
+      console.log(chalk.gray(`  Format: ${formatArg}`));
+      console.log(chalk.gray(`  Split: ${split}`));
+      console.log(chalk.gray(`  Overlap: ${overlap}`));
+      
+      const startTime = Date.now();
+      const result = await palace.exportForLLM({
+        maxTokens,
+        format: formatArg,
+        split,
+        overlap
+      });
+      const duration = Date.now() - startTime;
+      
+      // Write output
+      const outputDir = path.resolve(outputArg);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      
+      // Write each chunk
+      for (const chunk of result.chunks) {
+        const filename = result.chunks.length === 1 
+          ? `palace-export.${formatArg}`
+          : `palace-export-${chunk.index + 1}-of-${result.chunks.length}.${formatArg}`;
+        const filepath = path.join(outputDir, filename);
+        fs.writeFileSync(filepath, chunk.content);
+      }
+      
+      // Write manifest
+      const manifestPath = path.join(outputDir, 'manifest.json');
+      fs.writeFileSync(manifestPath, JSON.stringify({
+        version: '2.6.0',
+        exportedAt: new Date().toISOString(),
+        totalTokens: result.totalTokens,
+        totalCharacters: result.totalCharacters,
+        totalWords: result.totalWords,
+        chunks: result.chunks.length,
+        format: formatArg,
+        maxTokens,
+        overlap,
+        files: result.chunks.map(c => ({
+          index: c.index,
+          tokens: c.tokens,
+          characters: c.characters,
+          file: result.chunks.length === 1 
+            ? `palace-export.${formatArg}`
+            : `palace-export-${c.index + 1}-of-${result.chunks.length}.${formatArg}`
+        }))
+      }, null, 2));
+      
+      console.log(chalk.green('\n✓ LLM export complete'));
+      console.log(chalk.gray(`  Duration: ${duration}ms`));
+      console.log(chalk.gray(`  Total tokens: ${result.totalTokens.toLocaleString()}`));
+      console.log(chalk.gray(`  Total characters: ${result.totalCharacters.toLocaleString()}`));
+      console.log(chalk.gray(`  Total words: ${result.totalWords.toLocaleString()}`));
+      console.log(chalk.gray(`  Chunks: ${result.chunks.length}`));
+      console.log(chalk.gray(`  Output: ${outputDir}`));
+      
+      if (result.chunks.length > 1) {
+        console.log(chalk.cyan('\n📄 Chunk sizes:'));
+        result.chunks.forEach(c => {
+          console.log(chalk.gray(`  Chunk ${c.index + 1}: ${c.tokens.toLocaleString()} tokens (${c.characters.toLocaleString()} chars)`));
+        });
+      }
+      
+      console.log(chalk.gray('\n💡 Usage: Copy files to LLM chat context for web browser AIs'));
+      
+    } catch (error) {
+      handleError(error);
+    }
   }
 };
 
@@ -599,9 +787,15 @@ if (args.includes('--help') || args.includes('-h')) {
   commands.help();
 }
 
+// Map kebab-case commands to camelCase
+const commandMap = {
+  'llm-export': 'llmExport'
+};
+
 // Run command
-if (commands[command]) {
-  commands[command]();
+const resolvedCommand = commandMap[command] || command;
+if (commands[resolvedCommand]) {
+  commands[resolvedCommand]();
 } else {
   console.log(chalk.red(`Unknown command: ${command}`));
   console.log(chalk.gray('Run "palace help" for usage'));
