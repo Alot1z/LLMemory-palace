@@ -1,0 +1,123 @@
+{
+  "name": "llmemory-palace",
+  "version": "1.0.4",
+  "type": "module",
+  "description": "LLMemory-Palace: Code genome system for LLM context transfer. Maps codebases into portable format for LLM understanding.",
+  "main": "lib/palace.js",
+  "bin": {
+    "palace": "./bin/cli.js"
+  },
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/palace.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./genome": "./lib/genome.js",
+    "./genome-safe": "./lib/genome-safe.js",
+    "./cli-validator": "./lib/cli-validator.js",
+    "./patterns": "./lib/patterns.js",
+    "./flows": "./lib/flows.js",
+    "./semantic-hash": "./lib/semantic-hash.js",
+    "./reconstructor": "./lib/reconstructor.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js",
+    "test": "node tests/palace.test.mjs",
+    "test:security": "node tests/security.test.mjs",
+    "test:cli": "node tests/cli-validation.test.mjs",
+    "test:integration": "node tests/integration/full-workflow.test.mjs",
+    "test:all": "npm run test && npm run test:security && npm run test:cli && npm run test:integration",
+    "lint": "eslint lib/**/*.js bin/**/*.js",
+    "lint:fix": "eslint lib/**/*.js bin/**/*.js --fix",
+    "build": "node scripts/build.js",
+    "build:types": "tsc lib/*.js --declaration --allowJs --emitDeclarationOnly --outDir dist",
+    "genome": "node bin/cli.js genome",
+    "export": "node bin/cli.js export",
+    "compress": "node bin/cli.js compress",
+    "rebuild": "node bin/cli.js rebuild",
+    "status": "node bin/cli.js status",
+    "validate": "node bin/cli.js validate",
+    "clean": "rm -rf dist/ .palace/ reconstructed/",
+    "prepublishOnly": "npm run build && npm run test && npm run test:security",
+    "security:audit": "npm audit && npm run test:security"
+  },
+  "keywords": [
+    "llm",
+    "context",
+    "code-genome",
+    "cxml",
+    "ai",
+    "code-analysis",
+    "ast",
+    "pattern-library",
+    "behavior-graph",
+    "semantic-hash",
+    "neural-code",
+    "memory-palace",
+    "context-transfer",
+    "security",
+    "input-validation",
+    "safe-parsing"
+  ],
+  "author": "LLMemory-Palace Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alot1z/LLMemory-palace"
+  },
+  "bugs": {
+    "url": "https://github.com/Alot1z/LLMemory-palace/issues"
+  },
+  "homepage": "https://github.com/Alot1z/LLMemory-palace#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "lib/",
+    "dist/",
+    "config/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "glob": "^10.3.0",
+    "minimatch": "^9.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.0"
+  },
+  "palace": {
+    "version": "v2.6.0",
+    "security": {
+      "eval": false,
+      "inputValidation": true,
+      "pathTraversalProtection": true,
+      "injectionProtection": true,
+      "safeGenomeParsing": true
+    },
+    "features": [
+      "pattern-library",
+      "behavior-graphs",
+      "semantic-hashing",
+      "one-line-genome",
+      "llm-interactive",
+      "full-reconstruction",
+      "security-validation",
+      "input-sanitization"
+    ],
+    "compressionLevels": {
+      "level1": "state-only",
+      "level2": "structure-deps",
+      "level3": "full-source",
+      "level4": "max-density-genome"
+    }
+  }
+}
