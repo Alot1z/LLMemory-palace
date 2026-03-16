@@ -12,6 +12,7 @@ Detailed documentation for all modules and functions.
 6. **[Reconstructor](Reconstructor.md)** - Code generation from genome
 7. **[CLI Validator](CLI-Validator.md)** - Input sanitization
 8. **[Safe Genome Parser](Genome-Safe.md)** - Security layer
+9. **[Refresh](Refresh.md)** - Incremental update with parallel chain logic
 
 ## Quick Reference
 
@@ -24,5 +25,6 @@ Detailed documentation for all modules and functions.
 | GenomeEncoder | Encode to genome | `import { GenomeEncoder } from 'llmemory-palace/genome'` |
 | GenomeDecoder | Decode from genome | `import { GenomeDecoder } from 'llmemory-palace/genome'` |
 | Reconstructor | Generate code | `import { Reconstructor } from 'llmemory-palace/reconstructor'` |
+| Refresher | Incremental update | `import { Refresher } from 'llmemory-palace/refresh'` |
 | validatePath | Path validation | `import { validatePath } from 'llmemory-palace/cli-validator'` |
 | safeGenomeParse | Safe parsing | `import { safeGenomeParse } from 'llmemory-palace/genome-safe'` |
