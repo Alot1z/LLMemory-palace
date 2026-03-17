@@ -1,12 +1,11 @@
 {
   "name": "llmemory-palace",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "type": "module",
   "description": "LLMemory-Palace: Code genome system for LLM context transfer. Maps codebases into portable format for LLM understanding. Now with MCP server and reference-based minimal context (90%+ token savings).",
   "main": "lib/palace.js",
   "bin": {
-    "palace": "./bin/cli.js",
-    "palace-web": "./bin/palace-web.js"
+    "palace": "./bin/cli.js"
   },
   "types": "dist/index.d.ts",
   "exports": {
