@@ -1,11 +1,12 @@
-# 🧠 LLMemory-Palace
+# 🏛️ LLMemory-Palace
 
-[![npm version](https://img.shields.io/npm/v/llmemory-palace.svg)](https://www.npmjs.com/package/llmemory-palace)
-[![Node CI](https://github.com/Alot1z/LLMemory-palace/actions/workflows/test.yml/badge.svg)](https://github.com/Alot1z/LLMemory-palace/actions/workflows/test.yml)
+[![npm version](https://img.shields.io/npm/v/llmemory-palace.svg?color=blue)](https://www.npmjs.com/package/llmemory-palace)
+[![npm downloads](https://img.shields.io/npm/dm/llmemory-palace.svg?color=green)](https://www.npmjs.com/package/llmemory-palace)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Bun](https://img.shields.io/badge/Bun-1.0+-black?logo=bun)](https://bun.sh/)
+[![Node](https://img.shields.io/badge/Node-18+-green?logo=node.js)](https://nodejs.org/)
 
-**[📦 npm](https://www.npmjs.com/package/llmemory-palace)** | **[📖 Docs](./wiki/Home.md)** | **[🗺️ Roadmap](./ROADMAP.md)** | **[🐛 Issues](https://github.com/Alot1z/LLMemory-palace/issues)** | **[💻 GitHub](https://github.com/Alot1z/LLMemory-palace)**
+**[📦 npm](https://www.npmjs.com/package/llmemory-palace)** | **[💻 GitHub](https://github.com/Alot1z/LLMemory-palace)** | **[📖 Docs](./wiki/Home.md)** | **[🗺️ Roadmap](./ROADMAP.md)** | **[🐛 Issues](https://github.com/Alot1z/LLMemory-palace/issues)**
 
 ---
 
@@ -20,7 +21,11 @@ LLMemory-Palace maps your code into a portable format. Not your actual code—a 
 ## Install
 
 ```bash
+# npm
 npm install llmemory-palace
+
+# bun
+bun add llmemory-palace
 ```
 
 Node.js 18+ | Bun 1.0+
@@ -136,6 +141,6 @@ MIT
 
 ---
 
-**[⬆ Back to Top](#-llmemory-palace)**
+**[⬆ Back to Top](#️-llmemory-palace)**
 
 **Links:** [npm](https://www.npmjs.com/package/llmemory-palace) | [GitHub](https://github.com/Alot1z/LLMemory-palace) | [Issues](https://github.com/Alot1z/LLMemory-palace/issues)
