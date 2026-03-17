@@ -1,0 +1,48 @@
+{
+  "exclude": {
+    "directories": [
+      "node_modules",
+      ".git",
+      ".palace",
+      "dist",
+      "build",
+      "__pycache__",
+      ".next",
+      ".nuxt",
+      "coverage",
+      ".cache"
+    ],
+    "files": [
+      "*.md",
+      "*.txt",
+      "*.rst",
+      "package-lock.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      ".DS_Store",
+      "Thumbs.db"
+    ],
+    "extensions": [
+      ".pyc",
+      ".pyo",
+      ".o",
+      ".a",
+      ".so",
+      ".dll",
+      ".exe",
+      ".log"
+    ]
+  },
+  "include": {
+    "extensions": [
+      ".js", ".jsx", ".ts", ".tsx",
+      ".py", ".pyw",
+      ".go", ".rs", ".java", ".kt",
+      ".rb", ".php",
+      ".c", ".cpp", ".h", ".hpp",
+      ".cs", ".swift",
+      ".json", ".yaml", ".yml", ".toml",
+      ".sql", ".sh", ".bash"
+    ]
+  }
+}

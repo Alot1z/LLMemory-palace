@@ -1,11 +1,12 @@
 {
   "name": "llmemory-palace",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "type": "module",
   "description": "LLMemory-Palace: Code genome system for LLM context transfer. Maps codebases into portable format for LLM understanding. Now with parallel chain refresh support.",
   "main": "lib/palace.js",
   "bin": {
-    "palace": "./bin/cli.js"
+    "palace": "./bin/cli.js",
+    "palace-web": "./bin/palace-web.js"
   },
   "types": "dist/index.d.ts",
   "exports": {
@@ -23,15 +24,21 @@
     "./refresh": "./lib/refresh.js",
     "./refresh-analyzer": "./lib/refresh-analyzer.js",
     "./state-reducer": "./lib/state-reducer.js",
-    "./scanner-parallel": "./lib/scanner-parallel.js"
+    "./scanner-parallel": "./lib/scanner-parallel.js",
+    "./scanner-optimized": "./lib/scanner-optimized.js",
+    "./large-file-handler": "./lib/large-file-handler.js"
   },
   "scripts": {
     "start": "node bin/cli.js",
+    "start:web": "node bin/palace-web.js",
+    "web": "node bin/palace-web.js",
     "test": "node tests/palace.test.mjs",
     "test:security": "node tests/security.test.mjs",
     "test:cli": "node tests/cli-validation.test.mjs",
     "test:integration": "node tests/integration/full-workflow.test.mjs",
-    "test:all": "npm run test && npm run test:security && npm run test:cli && npm run test:integration",
+    "test:streaming": "node tests/unit/streaming.test.mjs",
+    "test:scanner-perf": "node tests/benchmark/scanner-perf.test.mjs",
+    "test:all": "npm run test && npm run test:security && npm run test:cli && npm run test:integration && npm run test:streaming && npm run test:scanner-perf",
     "lint": "eslint lib/**/*.js bin/**/*.js",
     "lint:fix": "eslint lib/**/*.js bin/**/*.js --fix",
     "build": "node scripts/build.js",
@@ -80,6 +87,7 @@
   "files": [
     "bin/",
     "lib/",
+    "web/",
     "dist/",
     "config/",
     "README.md",
@@ -89,11 +97,16 @@
   "dependencies": {
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
     "glob": "^10.3.0",
     "minimatch": "^9.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@babel/parser": "^7.29.0",
+    "@babel/traverse": "^7.29.0",
+    "@types/babel__traverse": "^7.28.0",
     "@types/node": "^25.5.0",
     "eslint": "^8.57.0",
     "typescript": "^5.3.0"
