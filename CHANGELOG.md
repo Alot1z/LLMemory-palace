@@ -1,124 +1,162 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
-
 Format: `[vMAJOR.MINOR.PATCH] - YYYY-MM-DD`
+
+---
+
+## [v1.1.0] - 2025-03-17
+
+### AI Integration
+- **Prompt Templates** (`lib/ai/prompt-templates.js`) - LLM-ready prompts for Claude, GPT, Ollama
+- **Embedding Patterns** (`lib/ai/embedding-patterns.js`) - Semantic chunking, search index generation
+
+### Export Formats
+- **YAML Exporter** (`lib/exporters/yaml-exporter.js`) - Custom parser, zero dependencies
+- **MessagePack Exporter** (`lib/exporters/messagepack-exporter.js`) - Binary serialization
+
+### Streaming
+- **Large File Handler** (`lib/streaming/large-file-handler.js`) - Stream files >100MB with backpressure
+- **Chunked Export/Import** - Split genomes with checksums
+- **LRU Cache** - 316x scanner speedup
+
+### Plugin System
+- **Hook System** (`lib/plugins/hooks.js`) - Priority hooks: onScan, onExport, onRefresh
+- **Plugin Loader** (`lib/plugins/loader.js`) - Dynamic loading from `.palace/plugins/`
+
+### Web Interface
+- **Express Server** (`web/server.js`) - REST API + web UI
+- **11 API Endpoints** (`web/routes/api.js`) - HTTP operations
+- **Dashboard** (`web/public/index.html`) - Browser management
+
+### CI/CD
+- GitHub Actions: Node 18/20/22 testing
+- Auto-publish on version tags
+
+### Tests
+- 422+ tests passing
+- Security: 28/28
+- CLI validation: 61/61
+
+### Export Paths
+```
+./ai/prompts      -> lib/ai/prompt-templates.js
+./ai/embedding    -> lib/ai/embedding-patterns.js
+./exporters/yaml  -> lib/exporters/yaml-exporter.js
+./exporters/msgpack -> lib/exporters/messagepack-exporter.js
+./streaming       -> lib/streaming/large-file-handler.js
+./plugins         -> lib/plugins/hooks.js
+```
+
+### Internal
+- Redux-like StateReducer (immutable updates)
+- Worker threads (parallel scanning)
+- Import graph parsing (ripple effects)
+- Progress callbacks (long operations)
+
+---
+
+## [v1.0.8] - 2025-03-16
+
+### Added
+- Parallel Chain Refresh System
+  - `lib/refresh.js` - Ripple propagation
+  - `lib/scanner-parallel.js` - Worker pool
+  - `lib/state-reducer.js` - Atomic reducers
+  - `lib/refresh-analyzer.js` - Metric analysis
+- CLI: `palace refresh <file>` with `--ripple`, `--dry-run`, `--metrics`
+- Incremental state with semantic twin tracking
+- Dependency tracking with automatic propagation
+
+---
+
+## [v1.0.7] - 2025-03-16
+
+### Added
+- CLI documentation (15 commands)
+- Wiki folder (8 API guides)
+- npm badges
 
 ---
 
 ## [v1.0.5] - 2025-03-16
 
 ### Added
-- Complete CLI documentation in README (15 commands)
-- Wiki documentation folder with 8 API guides
-- npm badges and quick links in README
+- Semantic version badges
+- Non-developer explanation section
 
 ### Changed
-- Removed .gitignore from repo (local only)
-- Clean repo history (no junk files)
+- README rewritten
+- API docs moved to wiki/
 
 ---
 
 ## [v1.0.4] - 2025-03-16
 
 ### Added
-- Semantic version badges in README
-- `/stop-slop` principles applied to documentation
-- Non-developer explanation section
-
-### Changed
-- README rewritten for accessibility
-- Philosophical storytelling approach
-- Detailed API docs moved to wiki/
-
----
-
-## [v1.0.3] - 2025-03-16
-
-### Added
-- GitHub repository setup
+- GitHub repository
 - MIT License
 - Initial npm publish
 
 ### Security
-- No `eval()` - completely removed
-- Full input validation
+- No `eval()`
+- Input validation
 - Path traversal protection
-- Injection attack prevention
-- Safe genome parsing (JSON only)
+- Injection prevention
+- Safe genome parsing
 
 ---
 
 ## [v1.0.0] - 2025-03-14
 
-### Added
-- **Core Modules**
-  - `Palace` - Main orchestrator class
-  - `PatternLibrary` - Code template management
-  - `BehaviorGraph` - Flow and sequence mapping
-  - `SemanticHash` - Code fingerprinting
-  - `GenomeEncoder/Decoder` - Compression engine
-  - `Reconstructor` - Code generation from genome
-  - `CLIValidator` - Input sanitization
-  - `GenomeSafe` - Security layer
+### Core Modules
+- `Palace` - Main orchestrator
+- `PatternLibrary` - Template management
+- `BehaviorGraph` - Flow mapping
+- `SemanticHash` - Fingerprinting
+- `GenomeEncoder/Decoder` - Compression
+- `Reconstructor` - Code generation
+- `CLIValidator` - Input sanitization
+- `GenomeSafe` - Security layer
 
-- **CLI Commands**
-  - `init` - Initialize palace directory
-  - `scan` - Analyze codebase
-  - `genome` - Generate genome string
-  - `export` - Export to CXML/JSON
-  - `rebuild` - Reconstruct from genome
-  - `pack` - Create portable package
-  - `merge` - Merge package into project
-  - `compress` - Pattern compression
-  - `patterns` - Manage pattern library
-  - `flows` - Manage behavior graphs
-  - `deps` - Dependency analysis
-  - `complexity` - Complexity metrics
-  - `status` - Show current state
-  - `query` - Interactive LLM query
-  - `validate` - Security validation
+### CLI Commands
+- `init`, `scan`, `genome`, `export`, `rebuild`
+- `pack`, `merge`, `compress`
+- `patterns`, `flows`, `deps`, `complexity`, `status`
+- `query`, `validate`
 
-- **Configuration**
-  - `config/exclude.json` - File exclusion patterns
-  - `config/patterns.json` - Built-in patterns
-  - `config/settings.json` - Default settings
+### Configuration
+- `config/exclude.json`
+- `config/patterns.json`
+- `config/settings.json`
 
 ---
 
-## Versioning Scheme
+## Versioning
 
 ```
-vMAJOR.MINOR.PATCH
-
 MAJOR - Breaking changes
 MINOR - New features, backward compatible
-PATCH - Bug fixes, documentation
+PATCH - Bug fixes
 ```
 
 ---
 
 ## Upcoming
 
-See [ROADMAP.md](./ROADMAP.md) for full details.
+See [ROADMAP.md](./ROADMAP.md)
 
-### [v1.1.0] - Planned
+### [v1.2.0]
+- Watch mode
+- Config file (`.palacerc`)
+- Custom pattern registration
+- Flow templates
 
-- [ ] Watch mode (`palace watch`)
-- [ ] Config file support (`.palacerc`)
-- [ ] Plugin system
-- [ ] Custom pattern registration
-- [ ] Flow templates
+### [v1.3.0]
+- Multi-project genomes
+- LLM provider integrations
+- Real-time sync
 
-### [v1.2.0] - Future
-
-- [ ] Multi-project genomes
-- [ ] LLM provider integrations
-- [ ] Real-time sync
-
-### [v2.0.0] - Platform
-
-- [ ] Web dashboard
-- [ ] Cloud sync
-- [ ] API server
-- [ ] IDE extensions
+### [v2.0.0]
+- Web dashboard
+- Cloud sync
+- IDE extensions

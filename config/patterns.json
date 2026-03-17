@@ -1,0 +1,52 @@
+{
+  "patterns": {
+    "CRUD_ENTITY": {
+      "template": "async function {action}{entity}(id) { return db.{entity}.{method}({id}); }",
+      "instances": [
+        { "action": "get", "entity": "User", "method": "find" },
+        { "action": "get", "entity": "Order", "method": "find" },
+        { "action": "create", "entity": "Product", "method": "insert" }
+      ]
+    },
+    "EXPRESS_ROUTE": {
+      "template": "app.{method}(\"{path}\", async (req, res) => { {logic} });",
+      "instances": [
+        { "method": "GET", "path": "/users", "logic": "getUsers()" },
+        { "method": "POST", "path": "/orders", "logic": "createOrder()" }
+      ]
+    },
+    "REPOSITORY": {
+      "template": "class {name}Repository { async findById(id) { return this.db.{table}.findUnique({ where: { id } }); } }",
+      "instances": []
+    },
+    "SERVICE": {
+      "template": "class {name}Service { constructor(repo) { this.repo = repo; } async {method}(...args) { return this.repo.{repoMethod}(...args); } }",
+      "instances": []
+    },
+    "CONTROLLER": {
+      "template": "class {name}Controller { async {method}(req, res) { const result = await this.service.{serviceMethod}(req.body); res.json(result); } }",
+      "instances": []
+    },
+    "TEST": {
+      "template": "describe('{name}', () => { it('should {behavior}', async () => { expect(result).toBeDefined(); }); });",
+      "instances": []
+    }
+  },
+  "flows": {
+    "AUTH_LOGIN": {
+      "steps": ["validate_input", "hash_password", "db_lookup_user", "compare_hash", "generate_jwt"]
+    },
+    "AUTH_REGISTER": {
+      "steps": ["validate_input", "check_existing_user", "hash_password", "create_user", "generate_jwt"]
+    },
+    "CRUD_CREATE": {
+      "steps": ["validate_input", "check_permissions", "transform_data", "db_insert", "emit_event"]
+    },
+    "CRUD_READ": {
+      "steps": ["validate_input", "check_permissions", "db_query", "transform_response"]
+    },
+    "ORDER_PROCESS": {
+      "steps": ["validate_order", "check_inventory", "reserve_items", "charge_payment", "confirm_order", "notify_user"]
+    }
+  }
+}

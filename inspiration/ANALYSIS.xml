@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CXML version="25.0">
+  <METADATA>
+    <PROJECT>LLMemory Palace</PROJECT>
+    <VERSION>25.0.0</VERSION>
+    <COMMAND>llmp</COMMAND>
+    <TOTAL_FILES>10</TOTAL_FILES>
+    <TOTAL_LINES>2323</TOTAL_LINES>
+    <TOTAL_SIZE>145KB</TOTAL_SIZE>
+    <LANGUAGE>JavaScript/Node.js</LANGUAGE>
+    <TYPE>npm-cli-package</TYPE>
+  </METADATA>
+
+  <SUMMARY>
+    LLMP (LLMemory Palace) v25 is a complete npm CLI package for neural code genome compression. 
+    It provides algorithmic compression (no LLM required) with 50-2000x compression ratios, 
+    supporting 15+ programming languages with one-line genome generation, CXML/JSON export, 
+    and a beautiful CLI with sunshine rays ASCII art logo.
+  </SUMMARY>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- FILE ANALYSIS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <FILES>
+    
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- BIN/CLI.JS - Main CLI Entry Point -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="bin/cli.js" lines="427" purpose="CLI-entry-point">
+      <IMPORTS>
+        <IMPORT from="commander">Command</IMPORT>
+        <IMPORT from="chalk">chalk</IMPORT>
+        <IMPORT from="../lib/palace.js">Palace, quickScan, decodeGenome, GLYPHS, LANGUAGES, DEFAULT_IGNORE</IMPORT>
+        <IMPORT from="../lib/logo.js">renderLogoCompact, renderLogoMinimal, createBanner, createStatusBox, COLOR_SCHEMES</IMPORT>
+      </IMPORTS>
+      
+      <CONSTANTS>
+        <CONST name="VERSION" value="25.0.0"/>
+        <CONST name="DESCRIPTION" value="LLMemory-Palace v25"/>
+      </CONSTANTS>
+
+      <COMMANDS count="9">
+        <CMD name="scan" purpose="Scan-project-directory">
+          <OPTIONS>-e, -i, --max-files, --max-size, --save</OPTIONS>
+          <FLOW>Parse options → Create Palace → Scan files → Output stats → Save state</FLOW>
+        </CMD>
+        <CMD name="genome" purpose="Generate-one-line-genome">
+          <OPTIONS>-m, -s, -p, --decode</OPTIONS>
+          <FLOW>Parse options → Scan project → Generate genome → Output with compression ratio</FLOW>
+        </CMD>
+        <CMD name="export" purpose="Export-to-CXML/JSON">
+          <OPTIONS>-f, -o, -m</OPTIONS>
+          <FLOW>Scan → Generate export → Write to file or stdout</FLOW>
+        </CMD>
+        <CMD name="analyze" purpose="Analyze-codebase">
+          <OPTIONS>-d, --complexity, --dependencies</OPTIONS>
+          <FLOW>Scan → Extract stats → Find top files → Output analysis report</FLOW>
+        </CMD>
+        <CMD name="status" purpose="Show-palace-status">
+          <FLOW>Display version, status, engine, compression, languages</FLOW>
+        </CMD>
+        <CMD name="languages" purpose="List-supported-languages">
+          <FLOW>Iterate LANGUAGES → Output each with extensions</FLOW>
+        </CMD>
+        <CMD name="init" purpose="Initialize-configuration">
+          <OPTIONS>-f, --force</OPTIONS>
+          <FLOW>Check existing → Create .llmp.json config</FLOW>
+        </CMD>
+        <CMD name="reconstruct" purpose="Reconstruct-from-genome">
+          <OPTIONS>-o, --output</OPTIONS>
+          <FLOW>Decode genome → Output decoded data</FLOW>
+        </CMD>
+        <CMD name="help" purpose="Show-help">
+          <FLOW>Display command help or general help</FLOW>
+        </CMD>
+      </COMMANDS>
+
+      <UTILITIES>
+        <FUNC name="formatBytes" purpose="Convert bytes to human-readable format">
+          <LOGIC>Calculate power of 1024 → Return formatted string with unit</LOGIC>
+        </FUNC>
+      </UTILITIES>
+
+      <DEPENDENCIES>
+        <DEP type="npm" name="commander" purpose="CLI framework"/>
+        <DEP type="npm" name="chalk" purpose="Terminal colors"/>
+        <DEP type="internal" module="palace.js"/>
+        <DEP type="internal" module="logo.js"/>
+      </DEPENDENCIES>
+
+      <PATTERNS>
+        <PATTERN type="command-pattern">Commander.js command definitions with options</PATTERN>
+        <PATTERN type="error-handling">try-catch with chalk error formatting</PATTERN>
+        <PATTERN type="async-flow">async/await for file operations</PATTERN>
+      </PATTERNS>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- LIB/PALACE.JS - Core Engine -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="lib/palace.js" lines="680" purpose="core-engine">
+      <IMPORTS>
+        <IMPORT from="crypto">createHash</IMPORT>
+        <IMPORT from="fs">readFileSync, writeFileSync, existsSync, readdirSync, statSync, mkdirSync</IMPORT>
+        <IMPORT from="path">join, extname, basename, relative, dirname</IMPORT>
+        <IMPORT from="glob">glob</IMPORT>
+        <IMPORT from="ignore">ignore</IMPORT>
+      </IMPORTS>
+
+      <EXPORTS>
+        <EXPORT>GLYPHS</EXPORT>
+        <EXPORT>UNIVERSAL_GLYPHS</EXPORT>
+        <EXPORT>LANGUAGES</EXPORT>
+        <EXPORT>DEFAULT_IGNORE</EXPORT>
+        <EXPORT>FileEntry</EXPORT>
+        <EXPORT>SymbolNode</EXPORT>
+        <EXPORT>DependencyGraph</EXPORT>
+        <EXPORT>PatternLibrary</EXPORT>
+        <EXPORT>BehaviorGraph</EXPORT>
+        <EXPORT>Palace</EXPORT>
+        <EXPORT>quickScan</EXPORT>
+        <EXPORT>fileToGenome</EXPORT>
+        <EXPORT>decodeGenome</EXPORT>
+      </EXPORTS>
+
+      <CONSTANTS>
+        <CONST name="GLYPHS" type="object" purpose="Emoji/icon mappings for display">
+          <KEYS>FILE, CLASS, FUNCTION, IMPORT, EXPORT, VARIABLE, CONSTANT, INTERFACE, TYPE, METHOD, PROPERTY, OK, ERROR, WARNING, INFO, PROCESSING, FOLDER, ROOT, BRANCH, LEAF, VERTICAL, BRAIN, NEURON, SYNAPSE, GENOME</KEYS>
+        </CONST>
+        <CONST name="UNIVERSAL_GLYPHS" type="object" purpose="Greek letter symbol compression">
+          <MAPPING>α=ClassNode, β=FunctionNode, γ=ImportNode, δ=ExportNode, ε=FileEntry, ζ=Dependency, η=Language, θ=MethodInfo, ι=NeuroIndex, κ=Palace, λ=CompressionLayer, μ=Pattern, ν=Status, ξ=Task, ο=Session, π=Position, ρ=TypeRef, σ=Symbol, τ=Token, υ=Variable, φ=Flow, χ=Chunk, ψ=Edge, ω=Node</MAPPING>
+        </CONST>
+        <CONST name="LANGUAGES" type="object" purpose="Language configurations">
+          <LANGUAGES count="15">python, javascript, typescript, rust, go, java, c, cpp, ruby, php, swift, kotlin, json, yaml, markdown</LANGUAGES>
+        </CONST>
+        <CONST name="DEFAULT_IGNORE" type="array" purpose="Default ignore patterns">
+          <PATTERNS>node_modules/**, .git/**, __pycache__/**, *.pyc, .venv/**, dist/**, build/**, .next/**, coverage/**, *.min.js, *.min.css, *.lock</PATTERNS>
+        </CONST>
+      </CONSTANTS>
+
+      <CLASSES>
+        <CLASS name="FileEntry" purpose="Represents a single file">
+          <PROPERTIES>path, content, language, size, lines, hash, symbols, imports, exports, classes, functions, variables</PROPERTIES>
+          <METHODS>
+            <METHOD name="detectLanguage">Determine language from file extension</METHOD>
+            <METHOD name="computeHash">SHA256 hash of content (8 chars)</METHOD>
+            <METHOD name="toGenome">Convert to genome representation</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="SymbolNode" purpose="Represents a code symbol">
+          <PROPERTIES>type, name, position, metadata, id</PROPERTIES>
+          <METHODS>
+            <METHOD name="generateId">Create unique symbol ID</METHOD>
+            <METHOD name="toGlyph">Convert to Greek letter glyph</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="DependencyGraph" purpose="Tracks symbol dependencies">
+          <PROPERTIES>nodes, edges</PROPERTIES>
+          <METHODS>
+            <METHOD name="addNode">Add symbol node</METHOD>
+            <METHOD name="addEdge">Add dependency edge</METHOD>
+            <METHOD name="getDependents">Find dependents of symbol</METHOD>
+            <METHOD name="getDependencies">Find dependencies of symbol</METHOD>
+            <METHOD name="toGenome">Convert to genome format</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="PatternLibrary" purpose="Reusable code patterns">
+          <PROPERTIES>patterns</PROPERTIES>
+          <METHODS>
+            <METHOD name="initializeDefaultPatterns">Add CRUD, Singleton, Factory, API patterns</METHOD>
+            <METHOD name="addPattern">Register new pattern</METHOD>
+            <METHOD name="instantiate">Create code from pattern</METHOD>
+            <METHOD name="toGenome">Export pattern library</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="BehaviorGraph" purpose="Flow-based representation">
+          <PROPERTIES>flows</PROPERTIES>
+          <METHODS>
+            <METHOD name="addFlow">Add named flow with steps</METHOD>
+            <METHOD name="traceFlow">Get flow steps</METHOD>
+            <METHOD name="toGenome">Export flows</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="Palace" purpose="Main orchestrator">
+          <PROPERTIES>projectPath, files, symbols, graph, patterns, behaviors, config, stats</PROPERTIES>
+          <METHODS>
+            <METHOD name="constructor">Initialize with project path</METHOD>
+            <METHOD name="loadConfig">Load .llmp.json config</METHOD>
+            <METHOD name="scan">Scan project directory</METHOD>
+            <METHOD name="extractSymbols">Extract symbols from file</METHOD>
+            <METHOD name="extractPythonSymbols">Python AST extraction</METHOD>
+            <METHOD name="extractJSSymbols">JavaScript/TypeScript extraction</METHOD>
+            <METHOD name="extractRustSymbols">Rust extraction</METHOD>
+            <METHOD name="extractGoSymbols">Go extraction</METHOD>
+            <METHOD name="extractJavaSymbols">Java extraction</METHOD>
+            <METHOD name="generateGenome">Create one-line genome</METHOD>
+            <METHOD name="exportCXML">Export to CXML format</METHOD>
+            <METHOD name="exportJSON">Export to JSON format</METHOD>
+            <METHOD name="getContextForQuery">Get context for LLM queries</METHOD>
+          </METHODS>
+        </CLASS>
+      </CLASSES>
+
+      <FUNCTIONS>
+        <FUNC name="quickScan">Quick scan helper</FUNC>
+        <FUNC name="fileToGenome">Generate genome for single file</FUNC>
+        <FUNC name="decodeGenome">Decode genome to readable format</FUNC>
+      </FUNCTIONS>
+
+      <DEPENDENCIES>
+        <DEP type="node" name="crypto">Hashing</DEP>
+        <DEP type="node" name="fs">File system</DEP>
+        <DEP type="node" name="path">Path utilities</DEP>
+        <DEP type="npm" name="glob">File globbing</DEP>
+        <DEP type="npm" name="ignore">Ignore patterns</DEP>
+      </DEPENDENCIES>
+
+      <FLOWS>
+        <FLOW name="scan-flow">
+          <STEPS>Parse options → Create ignore filter → Glob files → Filter files → Read content → Create FileEntry → Extract symbols → Update stats</STEPS>
+        </FLOW>
+        <FLOW name="genome-flow">
+          <STEPS>Scan project → Collect stats → Build genome parts → Join with | → Calculate ratio</STEPS>
+        </FLOW>
+        <FLOW name="export-flow">
+          <STEPS>Scan → Build header → Build file sections → Build stats → Format output</STEPS>
+        </FLOW>
+      </FLOWS>
+
+      <PATTERNS>
+        <PATTERN type="builder-pattern">Method chaining for configuration</PATTERN>
+        <PATTERN type="factory-pattern">FileEntry and SymbolNode creation</PATTERN>
+        <PATTERN type="strategy-pattern">Language-specific symbol extraction</PATTERN>
+        <PATTERN type="visitor-pattern">AST walking for symbol extraction</PATTERN>
+      </PATTERNS>
+
+      <RISKS>
+        <RISK severity="medium">No error recovery for malformed files</RISK>
+        <RISK severity="low">Regex-based extraction may miss edge cases</RISK>
+        <RISK severity="low">No incremental scanning</RISK>
+      </RISKS>
+
+      <OPPORTUNITIES>
+        <OPPORTUNITY>Add Tree-sitter for better AST parsing</OPPORTUNITY>
+        <OPPORTUNITY>Add watch mode for live scanning</OPPORTUNITY>
+        <OPPORTUNITY>Add parallel file processing</OPPORTUNITY>
+        <OPPORTUNITY>Add caching for repeated scans</OPPORTUNITY>
+      </OPPORTUNITIES>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- LIB/GENOME.JS - Genome Encoder/Decoder -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="lib/genome.js" lines="280" purpose="genome-codec">
+      <IMPORTS>
+        <IMPORT from="crypto">createHash</IMPORT>
+      </IMPORTS>
+
+      <EXPORTS>
+        <EXPORT>GENOME_TOKENS</EXPORT>
+        <EXPORT>GenomeEncoder</EXPORT>
+        <EXPORT>GenomeDecoder</EXPORT>
+        <EXPORT>encodeGenome</EXPORT>
+        <EXPORT>decodeGenome</EXPORT>
+      </EXPORTS>
+
+      <CONSTANTS>
+        <CONST name="GENOME_TOKENS" type="object">
+          <KEYS>SECTION(|), FIELD(:), ARRAY(,), OBJECT(;), START({), END(}), NULL(∅)</KEYS>
+        </CONST>
+      </CONSTANTS>
+
+      <CLASSES>
+        <CLASS name="GenomeEncoder" purpose="Encode data to genome format">
+          <PROPERTIES>sections, patternLibrary, entityIndex, flowIndex</PROPERTIES>
+          <METHODS>
+            <METHOD name="addSection">Add section to genome</METHOD>
+            <METHOD name="addPattern">Add pattern template</METHOD>
+            <METHOD name="addEntity">Add entity</METHOD>
+            <METHOD name="addFlow">Add behavior flow</METHOD>
+            <METHOD name="encode">Generate genome string</METHOD>
+            <METHOD name="compressTemplate">Remove whitespace from template</METHOD>
+            <METHOD name="hashSteps">Create hash of flow steps</METHOD>
+          </METHODS>
+        </CLASS>
+
+        <CLASS name="GenomeDecoder" purpose="Decode genome to data">
+          <PROPERTIES>raw, parsed</PROPERTIES>
+          <METHODS>
+            <METHOD name="decode">Parse genome string</METHOD>
+            <METHOD name="parsePattern">Extract pattern data</METHOD>
+            <METHOD name="parseFlow">Extract flow data</METHOD>
+            <METHOD name="parseValue">Parse generic value</METHOD>
+            <METHOD name="reconstructPattern">Rebuild code from pattern</METHOD>
+            <METHOD name="traceFlow">Get flow steps</METHOD>
+            <METHOD name="getEntities">Get all entities</METHOD>
+          </METHODS>
+        </CLASS>
+      </CLASSES>
+
+      <FUNCTIONS>
+        <FUNC name="encodeGenome">Quick encode helper</FUNC>
+        <FUNC name="decodeGenome">Quick decode helper</FUNC>
+      </FUNCTIONS>
+
+      <FLOWS>
+        <FLOW name="encode-flow">
+          <STEPS>Add patterns → Add flows → Add entities → Add sections → Join with | → Return string</STEPS>
+        </FLOW>
+        <FLOW name="decode-flow">
+          <STEPS>Split by | → Parse each section → Build result object → Return</STEPS>
+        </FLOW>
+      </FLOWS>
+
+      <OPPORTUNITIES>
+        <OPPORTUNITY>Add compression (gzip/brotli)</OPPORTUNITY>
+        <OPPORTUNITY>Add validation schema</OPPORTUNITY>
+        <OPPORTUNITY>Add versioning support</OPPORTUNITY>
+      </OPPORTUNITIES>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- LIB/SEMANTIC-HASH.JS - Semantic Hashing -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="lib/semantic-hash.js" lines="220" purpose="semantic-hashing">
+      <IMPORTS>
+        <IMPORT from="crypto">createHash</IMPORT>
+      </IMPORTS>
+
+      <EXPORTS>
+        <EXPORT>SemanticHash</EXPORT>
+        <EXPORT>semanticHash</EXPORT>
+        <EXPORT>compareCode</EXPORT>
+      </EXPORTS>
+
+      <CLASSES>
+        <CLASS name="SemanticHash" purpose="Semantic hashing for deduplication">
+          <PROPERTIES>hashTable, clusters</PROPERTIES>
+          <METHODS>
+            <METHOD name="hash">Compute semantic hash</METHOD>
+            <METHOD name="normalize">Normalize code for comparison</METHOD>
+            <METHOD name="extractStructure">Extract structural features</METHOD>
+            <METHOD name="extractSymbols">Extract symbol features</METHOD>
+            <METHOD name="computeBracketDepth">Calculate nesting depth</METHOD>
+            <METHOD name="addToTable">Add hash to table</METHOD>
+            <METHOD name="findSimilar">Find similar code</METHOD>
+            <METHOD name="clusterCodes">Cluster similar code</METHOD>
+            <METHOD name="getStats">Get deduplication stats</METHOD>
+          </METHODS>
+        </CLASS>
+      </CLASSES>
+
+      <FUNCTIONS>
+        <FUNC name="semanticHash">Quick hash helper</FUNC>
+        <FUNC name="compareCode">Compare two code snippets</FUNC>
+      </FUNCTIONS>
+
+      <PATTERNS>
+        <PATTERN type="normalization">Remove comments, normalize whitespace, normalize strings/numbers</PATTERN>
+        <PATTERN type="feature-extraction">Count structural elements, compute depth</PATTERN>
+      </PATTERNS>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- LIB/LOGO.JS - ASCII Art Logo -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="lib/logo.js" lines="380" purpose="ascii-logo">
+      <IMPORTS>
+        <IMPORT from="chalk">chalk</IMPORT>
+      </IMPORTS>
+
+      <EXPORTS>
+        <EXPORT>COLOR_SCHEMES</EXPORT>
+        <EXPORT>LLMP_LOGO_COMPACT</EXPORT>
+        <EXPORT>LLMP_LOGO_FULL</EXPORT>
+        <EXPORT>LLMP_LOGO_MINIMAL</EXPORT>
+        <EXPORT>LLMP_LOGO_TINY</EXPORT>
+        <EXPORT>LLMP_LOGO_INLINE</EXPORT>
+        <EXPORT>renderLogoFull</EXPORT>
+        <EXPORT>renderLogoCompact</EXPORT>
+        <EXPORT>renderLogoMinimal</EXPORT>
+        <EXPORT>renderLogoTiny</EXPORT>
+        <EXPORT>renderLogoInline</EXPORT>
+        <EXPORT>createBanner</EXPORT>
+        <EXPORT>createStatusBox</EXPORT>
+      </EXPORTS>
+
+      <CONSTANTS>
+        <CONST name="COLOR_SCHEMES" type="object">
+          <SCHEMES>neon, matrix, sunset, arctic, royal</SCHEMES>
+          <COLORS per-scheme="12">primary, secondary, accent, border, text, dim, l, l2, m, p, ray, ray2, glow</COLORS>
+        </CONST>
+      </CONSTANTS>
+
+      <FEATURES>
+        <FEATURE>Sunshine rays effect (\|/ patterns)</FEATURE>
+        <FEATURE>LLMP letters with individual colors (L, L, M, P)</FEATURE>
+        <FEATURE>Glowing box border</FEATURE>
+        <FEATURE>Multiple size variants (full, compact, minimal, tiny, inline)</FEATURE>
+        <FEATURE>5 color schemes</FEATURE>
+      </FEATURES>
+
+      <COLOR_MAPPING>
+        <LETTER char="L" color="Cyan"/>
+        <LETTER char="L" color="Light Cyan"/>
+        <LETTER char="M" color="Magenta"/>
+        <LETTER char="P" color="Pink"/>
+        <ELEMENT name="rays" color="Light Cyan + Light Magenta"/>
+        <ELEMENT name="box" color="White glow"/>
+      </COLOR_MAPPING>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- LIB/INDEX.JS - Main Exports -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="lib/index.js" lines="25" purpose="exports">
+      <EXPORTS>
+        <EXPORT from="./palace.js">Palace, quickScan, fileToGenome, decodeGenome</EXPORT>
+        <EXPORT from="./palace.js">GLYPHS, UNIVERSAL_GLYPHS, LANGUAGES, DEFAULT_IGNORE, FileEntry, SymbolNode, DependencyGraph, PatternLibrary, BehaviorGraph</EXPORT>
+        <EXPORT from="./logo.js">Logo exports</EXPORT>
+        <EXPORT from="./genome.js">GenomeEncoder, GenomeDecoder</EXPORT>
+        <EXPORT from="./semantic-hash.js">SemanticHash</EXPORT>
+        <EXPORT>VERSION</EXPORT>
+      </EXPORTS>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- SCRIPTS/POSTINSTALL.JS -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="scripts/postinstall.js" lines="90" purpose="postinstall">
+      <FEATURES>
+        <FEATURE>Display LLMP logo with sunshine rays</FEATURE>
+        <FEATURE>Show quick start commands</FEATURE>
+        <FEATURE>List features</FEATURE>
+        <FEATURE>Show color scheme options</FEATURE>
+      </FEATURES>
+    </FILE>
+
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <!-- PACKAGE.JSON -->
+    <!-- ───────────────────────────────────────────────────────────────────── -->
+    <FILE path="package.json" purpose="npm-config">
+      <CONFIG>
+        <NAME>llmp</NAME>
+        <VERSION>25.0.0</VERSION>
+        <TYPE>module</TYPE>
+        <MAIN>lib/index.js</MAIN>
+        <BIN>llmp → ./bin/cli.js</BIN>
+        <DEPENDENCIES>
+          <DEP name="chalk" version="^5.3.0"/>
+          <DEP name="commander" version="^12.0.0"/>
+          <DEP name="glob" version="^10.3.0"/>
+          <DEP name="ignore" version="^5.3.0"/>
+        </DEPENDENCIES>
+        <ENGINES>node >= 18.0.0</ENGINES>
+      </CONFIG>
+    </FILE>
+
+  </FILES>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- DEPENDENCIES -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <DEPENDENCIES>
+    <PRODUCTION>
+      <DEP name="chalk" version="5.3.0" purpose="Terminal colors and styling"/>
+      <DEP name="commander" version="12.0.0" purpose="CLI framework"/>
+      <DEP name="glob" version="10.3.0" purpose="File pattern matching"/>
+      <DEP name="ignore" version="5.3.0" purpose="Ignore pattern filtering"/>
+    </PRODUCTION>
+    
+    <NODE_BUILTIN>
+      <DEP name="crypto" purpose="Hashing functions"/>
+      <DEP name="fs" purpose="File system operations"/>
+      <DEP name="path" purpose="Path utilities"/>
+    </NODE_BUILTIN>
+  </DEPENDENCIES>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- FLOWS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <FLOWS>
+    <FLOW name="complete-scan-flow" description="Full project scanning">
+      <STEP order="1">CLI parses arguments and options</STEP>
+      <STEP order="2">Create Palace instance with project path</STEP>
+      <STEP order="3">Load .llmp.json config if exists</STEP>
+      <STEP order="4">Create ignore filter from patterns</STEP>
+      <STEP order="5">Glob all matching files</STEP>
+      <STEP order="6">For each file: read content, detect language, create FileEntry</STEP>
+      <STEP order="7">Extract symbols using language-specific parser</STEP>
+      <STEP order="8">Build dependency graph</STEP>
+      <STEP order="9">Update statistics</STEP>
+      <STEP order="10">Output formatted results</STEP>
+    </FLOW>
+
+    <FLOW name="genome-generation-flow" description="One-line genome creation">
+      <STEP order="1">Scan project (steps 1-9 above)</STEP>
+      <STEP order="2">Collect stats into genome parts</STEP>
+      <STEP order="3">Build header: LLMPv25|PROJECT:name</STEP>
+      <STEP order="4">Add file stats: FILES:n|SIZE:n|LINES:n</STEP>
+      <STEP order="5">Add language distribution: LANG:{...}</STEP>
+      <STEP order="6">Add symbol summary: SYMBOLS:{C:n,F:n,S:n}</STEP>
+      <STEP order="7">Add pattern library if present</STEP>
+      <STEP order="8">Add flows if present</STEP>
+      <STEP order="9">Calculate compression ratio</STEP>
+      <STEP order="10">Join all parts with | delimiter</STEP>
+    </FLOW>
+
+    <FLOW name="export-flow" description="CXML/JSON export">
+      <STEP order="1">Scan project</STEP>
+      <STEP order="2">Build XML/JSON header</STEP>
+      <STEP order="3">Build legend section (glyphs)</STEP>
+      <STEP order="4">Build library section (files)</STEP>
+      <STEP order="5">Build stats section</STEP>
+      <STEP order="6">Format and output</STEP>
+    </FLOW>
+  </FLOWS>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- PATTERNS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <PATTERNS>
+    <ARCHITECTURAL>
+      <PATTERN name="Module Pattern">Separate concerns: CLI, Core, Utils</PATTERN>
+      <PATTERN name="Factory Pattern">FileEntry, SymbolNode creation</PATTERN>
+      <PATTERN name="Builder Pattern">GenomeEncoder method chaining</PATTERN>
+      <PATTERN name="Strategy Pattern">Language-specific symbol extraction</PATTERN>
+      <PATTERN name="Visitor Pattern">AST walking for code analysis</PATTERN>
+    </ARCHITECTURAL>
+
+    <CODE>
+      <PATTERN name="Async/Await">All file operations are async</PATTERN>
+      <PATTERN name="Error Handling">try-catch with chalk formatting</PATTERN>
+      <PATTERN name="Configuration">.llmp.json for project settings</PATTERN>
+      <PATTERN name="Ignore Patterns">gitignore-style pattern matching</PATTERN>
+    </CODE>
+  </PATTERNS>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- RISKS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <RISKS>
+    <RISK severity="medium" area="parsing">
+      <DESC>Regex-based symbol extraction may miss edge cases</DESC>
+      <MITIGATION>Add Tree-sitter for robust AST parsing</MITIGATION>
+    </RISK>
+    <RISK severity="low" area="memory">
+      <DESC>Large projects may consume significant memory</DESC>
+      <MITIGATION>Add streaming/chunked processing</MITIGATION>
+    </RISK>
+    <RISK severity="low" area="encoding">
+      <DESC>Binary files may cause encoding issues</DESC>
+      <MITIGATION>Binary file detection and skip</MITIGATION>
+    </RISK>
+    <RISK severity="low" area="reconstruction">
+      <DESC>Full reconstruction requires LLM or templates</DESC>
+      <MITIGATION>Build comprehensive template library</MITIGATION>
+    </RISK>
+  </RISKS>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- OPPORTUNITIES -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <OPPORTUNITIES>
+    <OPPORTUNITY priority="high" area="parsing">
+      <DESC>Add Tree-sitter for robust multi-language AST parsing</DESC>
+      <BENEFIT>Better accuracy, more language support</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="high" area="ux">
+      <DESC>Add watch mode for live project monitoring</DESC>
+      <BENEFIT>Real-time updates during development</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="medium" area="performance">
+      <DESC>Add incremental scanning with caching</DESC>
+      <BENEFIT>Faster repeated scans</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="medium" area="integration">
+      <DESC>Add VS Code extension</DESC>
+      <BENEFIT>IDE integration</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="medium" area="integration">
+      <DESC>Add GitHub Action for CI/CD</DESC>
+      <BENEFIT>Automated code analysis</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="low" area="features">
+      <DESC>Add web UI for visualization</DESC>
+      <BENEFIT>Better UX for complex projects</BENEFIT>
+    </OPPORTUNITY>
+    <OPPORTUNITY priority="low" area="features">
+      <DESC>Add diff/merge for genome comparison</DESC>
+      <BENEFIT>Track project evolution</BENEFIT>
+    </OPPORTUNITY>
+  </OPPORTUNITIES>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- STATISTICS -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <STATISTICS>
+    <SOURCE_FILES>10</SOURCE_FILES>
+    <TOTAL_LINES>2323</TOTAL_LINES>
+    <CLASSES>8</CLASSES>
+    <FUNCTIONS>15</FUNCTIONS>
+    <COMMANDS>9</COMMANDS>
+    <EXPORTS>35</EXPORTS>
+    <DEPENDENCIES>4 production, 3 node builtin</DEPENDENCIES>
+    <SUPPORTED_LANGUAGES>15</SUPPORTED_LANGUAGES>
+    <COLOR_SCHEMES>5</COLOR_SCHEMES>
+    <COMPRESSION_RANGE>50-2000x</COMPRESSION_RANGE>
+  </STATISTICS>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- ONE-LINE GENOME -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+  <GENOME>LLMPv25|PROJECT:llmp|FILES:10|SIZE:145000|LINES:2323|LANG:{javascript:10}|SYMBOLS:{C:8,F:15,S:35}|EXPORTS:{Palace,GenomeEncoder,SemanticHash,renderLogoCompact}|COMMANDS:9|DEPENDENCIES:4|COMPRESSION:50-2000x|VERSION:25.0.0</GENOME>
+
+</CXML>

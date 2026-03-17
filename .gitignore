@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Palace runtime
+.palace/
+reconstructed/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test artifacts
+coverage/
+.nyc_output/
+
+# Temporary files
+.bg-shell/
+.pi/
+_bmad/
+misc/
+test/
+llm-export/
+package.palace.json
+test.genome
+
+# Claude Code
+.claude/

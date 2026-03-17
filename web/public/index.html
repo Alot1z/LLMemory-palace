@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLMemory-Palace v3.0</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --accent-cyan: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #a371f7;
+      --accent-orange: #d29922;
+      --border-color: #30363d;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      font-size: 1.5rem;
+    }
+
+    .logo-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .status-badge {
+      background: var(--bg-tertiary);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Main Layout */
+    .main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 65px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      padding: 1rem 0;
+    }
+
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      padding: 0.5rem 1.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      color: var(--text-secondary);
+    }
+
+    .nav-item:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--bg-tertiary);
+      color: var(--accent-cyan);
+      border-left: 2px solid var(--accent-cyan);
+    }
+
+    .nav-icon {
+      font-size: 1.125rem;
+    }
+
+    /* Content */
+    .content {
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-description {
+      color: var(--text-secondary);
+    }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-icon {
+      font-size: 1.25rem;
+    }
+
+    .card-value {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .card-change {
+      font-size: 0.875rem;
+      color: var(--accent-green);
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      padding: 0.875rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table th {
+      background: var(--bg-tertiary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table tr:hover td {
+      background: var(--bg-tertiary);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover {
+      background: #79c0ff;
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-secondary);
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Code Block */
+    .code-block {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'SF Mono', Monaco, 'Andale Mono', monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    /* Input */
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent-cyan);
+    }
+
+    textarea.input {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    /* Tags */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      margin-right: 0.5rem;
+    }
+
+    .tag-cyan { color: var(--accent-cyan); }
+    .tag-green { color: var(--accent-green); }
+    .tag-purple { color: var(--accent-purple); }
+    .tag-orange { color: var(--accent-orange); }
+
+    /* Progress */
+    .progress-bar {
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-cyan);
+      transition: width 0.3s;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent-cyan);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 0.75rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 1000;
+    }
+
+    .toast {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideIn 0.3s;
+    }
+
+    .toast.success { border-left: 3px solid var(--accent-green); }
+    .toast.error { border-left: 3px solid #f85149; }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+      
+      .content {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <span class="logo-text">LLMemory-Palace</span>
+    </div>
+    <div class="status-badge">
+      <span class="status-dot"></span>
+      <span id="status-text">Connected</span>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="main">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="nav-section">
+        <div class="nav-title">Overview</div>
+        <div class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-page="files">
+          <span class="nav-icon">📁</span>
+          <span>Files</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-title">Analysis</div>
+        <div class="nav-item" data-page="patterns">
+          <span class="nav-icon">🧩</span>
+          <span>Patterns</span>
+        </div>
+        <div class="nav-item" data-page="flows">
+          <span class="nav-icon">⚡</span>
+          <span>Flows</span>
+        </div>
+        <div class="nav-item" data-page="dependencies">
+          <span class="nav-icon">🔗</span>
+          <span>Dependencies</span>
+        </div>
+        <div class="nav-item" data-page="complexity">
+          <span class="nav-icon">📈</span>
+          <span>Complexity</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-title">Actions</div>
+        <div class="nav-item" data-page="genome">
+          <span class="nav-icon">🧬</span>
+          <span>Genome</span>
+        </div>
+        <div class="nav-item" data-page="export">
+          <span class="nav-icon">📤</span>
+          <span>Export</span>
+        </div>
+        <div class="nav-item" data-page="query">
+          <span class="nav-icon">🔍</span>
+          <span>Query</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- Dashboard Page -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-description">Overview of your codebase analysis</p>
+        </div>
+        
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Total Files</span>
+              <span class="card-icon">📁</span>
+            </div>
+            <div class="card-value" id="stat-files">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Lines of Code</span>
+              <span class="card-icon">📝</span>
+            </div>
+            <div class="card-value" id="stat-lines">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Patterns</span>
+              <span class="card-icon">🧩</span>
+            </div>
+            <div class="card-value" id="stat-patterns">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Flows</span>
+              <span class="card-icon">⚡</span>
+            </div>
+            <div class="card-value" id="stat-flows">-</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="refreshData()">
+            <span>🔄</span> Refresh
+          </button>
+          <button class="btn btn-secondary" onclick="rescanProject()">
+            <span>🔍</span> Rescan
+          </button>
+        </div>
+
+        <h3 style="margin-bottom: 1rem;">Languages</h3>
+        <div id="languages-list" class="card-grid"></div>
+      </div>
+
+      <!-- Files Page -->
+      <div class="page" id="page-files">
+        <div class="page-header">
+          <h1 class="page-title">Files</h1>
+          <p class="page-description">Browse all analyzed files</p>
+        </div>
+        
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th>Language</th>
+                <th>Lines</th>
+                <th>Size</th>
+                <th>Patterns</th>
+              </tr>
+            </thead>
+            <tbody id="files-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Patterns Page -->
+      <div class="page" id="page-patterns">
+        <div class="page-header">
+          <h1 class="page-title">Patterns</h1>
+          <p class="page-description">Detected code patterns</p>
+        </div>
+        
+        <div id="patterns-list" class="card-grid"></div>
+      </div>
+
+      <!-- Flows Page -->
+      <div class="page" id="page-flows">
+        <div class="page-header">
+          <h1 class="page-title">Behavior Flows</h1>
+          <p class="page-description">Detected behavior flows in codebase</p>
+        </div>
+        
+        <div id="flows-list"></div>
+      </div>
+
+      <!-- Dependencies Page -->
+      <div class="page" id="page-dependencies">
+        <div class="page-header">
+          <h1 class="page-title">Dependencies</h1>
+          <p class="page-description">Module dependency analysis</p>
+        </div>
+        
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Total Dependencies</span>
+            </div>
+            <div class="card-value" id="dep-total">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Circular Dependencies</span>
+            </div>
+            <div class="card-value" id="dep-cycles">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complexity Page -->
+      <div class="page" id="page-complexity">
+        <div class="page-header">
+          <h1 class="page-title">Complexity Analysis</h1>
+          <p class="page-description">Code complexity metrics</p>
+        </div>
+        
+        <div class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Average Complexity</span>
+            </div>
+            <div class="card-value" id="complexity-avg">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Max Complexity</span>
+            </div>
+            <div class="card-value" id="complexity-max">-</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">High Complexity Files</span>
+            </div>
+            <div class="card-value" id="complexity-high">-</div>
+          </div>
+        </div>
+        
+        <h3 style="margin: 1.5rem 0 1rem;">High Complexity Files</h3>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Complexity</th>
+              </tr>
+            </thead>
+            <tbody id="complexity-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Genome Page -->
+      <div class="page" id="page-genome">
+        <div class="page-header">
+          <h1 class="page-title">Genome</h1>
+          <p class="page-description">One-line ultra-compressed genome</p>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="generateGenome()">
+            <span>🧬</span> Generate Genome
+          </button>
+          <button class="btn btn-secondary" onclick="copyGenome()">
+            <span>📋</span> Copy
+          </button>
+        </div>
+        
+        <div class="code-block" id="genome-output">Click "Generate Genome" to create a one-line genome representation.</div>
+      </div>
+
+      <!-- Export Page -->
+      <div class="page" id="page-export">
+        <div class="page-header">
+          <h1 class="page-title">Export</h1>
+          <p class="page-description">Export codebase analysis</p>
+        </div>
+        
+        <div class="card">
+          <div class="input-group">
+            <label class="input-label">Format</label>
+            <select class="input" id="export-format">
+              <option value="cxml">CXML</option>
+              <option value="json">JSON</option>
+              <option value="genome">Genome</option>
+            </select>
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">Compression Level</label>
+            <select class="input" id="export-level">
+              <option value="1">Level 1 - State Only</option>
+              <option value="2">Level 2 - Structure</option>
+              <option value="3" selected>Level 3 - Source Minimal</option>
+              <option value="4">Level 4 - Genome Full</option>
+            </select>
+          </div>
+          
+          <button class="btn btn-primary" onclick="exportProject()">
+            <span>📤</span> Export
+          </button>
+        </div>
+        
+        <div class="code-block" id="export-output" style="margin-top: 1rem; display: none;"></div>
+      </div>
+
+      <!-- Query Page -->
+      <div class="page" id="page-query">
+        <div class="page-header">
+          <h1 class="page-title">Query</h1>
+          <p class="page-description">Interactive LLM-style queries</p>
+        </div>
+        
+        <div class="card">
+          <div class="input-group">
+            <label class="input-label">Query</label>
+            <input type="text" class="input" id="query-input" placeholder="e.g., TRACE FLOW AUTH_LOGIN">
+          </div>
+          
+          <button class="btn btn-primary" onclick="executeQuery()">
+            <span>🔍</span> Execute
+          </button>
+        </div>
+        
+        <div class="code-block" id="query-output" style="margin-top: 1rem;">Results will appear here.</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // API base URL
+    const API_BASE = '/api';
+
+    // State
+    let state = {
+      status: null,
+      files: [],
+      patterns: [],
+      flows: [],
+      genome: null
+    };
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✓' : '✗'}</span> ${message}`;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+
+    // API helper
+    async function api(endpoint, options = {}) {
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options
+        });
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.error || 'API error');
+        }
+        return data.data;
+      } catch (error) {
+        showToast(error.message, 'error');
+        throw error;
+      }
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        
+        item.classList.add('active');
+        document.getElementById(`page-${item.dataset.page}`).classList.add('active');
+      });
+    });
+
+    // Format helpers
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function formatNumber(num) {
+      return num?.toLocaleString() || '-';
+    }
+
+    // Load status
+    async function loadStatus() {
+      try {
+        state.status = await api('/status');
+        updateDashboard();
+      } catch (error) {
+        document.getElementById('status-text').textContent = 'Error';
+      }
+    }
+
+    // Update dashboard
+    function updateDashboard() {
+      const s = state.status;
+      if (!s) return;
+
+      document.getElementById('stat-files').textContent = formatNumber(s.files);
+      document.getElementById('stat-lines').textContent = formatNumber(s.lines);
+      document.getElementById('stat-patterns').textContent = formatNumber(s.patterns);
+      document.getElementById('stat-flows').textContent = formatNumber(s.flows);
+    }
+
+    // Load files
+    async function loadFiles() {
+      try {
+        state.files = await api('/files');
+        updateFilesTable();
+      } catch (error) {
+        console.error('Failed to load files:', error);
+      }
+    }
+
+    // Update files table
+    function updateFilesTable() {
+      const tbody = document.getElementById('files-table');
+      tbody.innerHTML = state.files.map(f => `
+        <tr>
+          <td><code>${f.path}</code></td>
+          <td><span class="tag tag-cyan">${f.language}</span></td>
+          <td>${formatNumber(f.lines)}</td>
+          <td>${formatSize(f.size)}</td>
+          <td>${f.patterns}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Load patterns
+    async function loadPatterns() {
+      try {
+        const data = await api('/patterns');
+        state.patterns = Object.entries(data.data || data);
+        updatePatternsList();
+      } catch (error) {
+        console.error('Failed to load patterns:', error);
+      }
+    }
+
+    // Update patterns list
+    function updatePatternsList() {
+      const container = document.getElementById('patterns-list');
+      container.innerHTML = state.patterns.map(([name, p]) => `
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">${name}</span>
+            <span class="tag tag-purple">${p.instances || 0} instances</span>
+          </div>
+          <code style="font-size: 0.75rem; color: var(--text-secondary);">
+            ${(p.template || '').substring(0, 80)}...
+          </code>
+        </div>
+      `).join('');
+    }
+
+    // Load flows
+    async function loadFlows() {
+      try {
+        const data = await api('/flows');
+        state.flows = Object.entries(data.data || data);
+        updateFlowsList();
+      } catch (error) {
+        console.error('Failed to load flows:', error);
+      }
+    }
+
+    // Update flows list
+    function updateFlowsList() {
+      const container = document.getElementById('flows-list');
+      container.innerHTML = state.flows.map(([name, f]) => `
+        <div class="card" style="margin-bottom: 1rem;">
+          <div class="card-header">
+            <span class="card-title">${name}</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            ${(f.steps || []).map((step, i) => `
+              <span class="tag ${i === 0 ? 'tag-green' : 'tag-cyan'}">${step}</span>
+              ${i < (f.steps || []).length - 1 ? '<span style="color: var(--text-secondary);">→</span>' : ''}
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Load dependencies
+    async function loadDependencies() {
+      try {
+        const deps = await api('/dependencies');
+        document.getElementById('dep-total').textContent = formatNumber(deps.total);
+        document.getElementById('dep-cycles').textContent = formatNumber(deps.cycles);
+      } catch (error) {
+        console.error('Failed to load dependencies:', error);
+      }
+    }
+
+    // Load complexity
+    async function loadComplexity() {
+      try {
+        const complexity = await api('/complexity');
+        document.getElementById('complexity-avg').textContent = complexity.average;
+        document.getElementById('complexity-max').textContent = complexity.max;
+        document.getElementById('complexity-high').textContent = complexity.highCount;
+
+        const tbody = document.getElementById('complexity-table');
+        tbody.innerHTML = (complexity.highFiles || []).map(f => `
+          <tr>
+            <td><code>${f.path}</code></td>
+            <td><span class="tag tag-orange">${f.complexity}</span></td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load complexity:', error);
+      }
+    }
+
+    // Generate genome
+    async function generateGenome() {
+      try {
+        const data = await api('/genome');
+        state.genome = data.genome;
+        document.getElementById('genome-output').textContent = data.genome;
+        showToast(`Generated genome (${data.length} chars, ${data.compressionRatio}x compression)`);
+      } catch (error) {
+        console.error('Failed to generate genome:', error);
+      }
+    }
+
+    // Copy genome
+    function copyGenome() {
+      if (!state.genome) {
+        showToast('Generate genome first', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(state.genome);
+      showToast('Genome copied to clipboard');
+    }
+
+    // Export project
+    async function exportProject() {
+      try {
+        const format = document.getElementById('export-format').value;
+        const level = parseInt(document.getElementById('export-level').value);
+
+        const data = await api('/export', {
+          method: 'POST',
+          body: JSON.stringify({ format, level, compress: true })
+        });
+
+        const output = document.getElementById('export-output');
+        output.style.display = 'block';
+        output.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        showToast('Export complete');
+      } catch (error) {
+        console.error('Failed to export:', error);
+      }
+    }
+
+    // Execute query
+    async function executeQuery() {
+      try {
+        const query = document.getElementById('query-input').value;
+        if (!query) {
+          showToast('Enter a query', 'error');
+          return;
+        }
+
+        const data = await api('/query', {
+          method: 'POST',
+          body: JSON.stringify({ query })
+        });
+
+        document.getElementById('query-output').textContent = 
+          typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      } catch (error) {
+        console.error('Query failed:', error);
+      }
+    }
+
+    // Rescan project
+    async function rescanProject() {
+      try {
+        await api('/scan', { method: 'POST' });
+        showToast('Rescan complete');
+        refreshData();
+      } catch (error) {
+        console.error('Rescan failed:', error);
+      }
+    }
+
+    // Refresh all data
+    async function refreshData() {
+      await Promise.all([
+        loadStatus(),
+        loadFiles(),
+        loadPatterns(),
+        loadFlows(),
+        loadDependencies(),
+        loadComplexity()
+      ]);
+      showToast('Data refreshed');
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await refreshData();
+      } catch (error) {
+        console.error('Initialization failed:', error);
+      }
+
+      // Handle Enter key in query input
+      document.getElementById('query-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          executeQuery();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

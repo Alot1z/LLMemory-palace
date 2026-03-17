@@ -25,6 +25,7 @@ import {
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 
 const VERSION = '2.6.0';
 
@@ -123,6 +124,11 @@ const commands = {
     console.log('  validate          Validate genome file (security check)');
     console.log('  refresh <file>    Incremental update with parallel chain logic');
     console.log('  llm-export        Export optimized for LLM context windows');
+    console.log(chalk.bold('\nNew Commands (v2.6.0):'));
+    console.log('  diff <file>       Show changes since last scan');
+    console.log('  watch             Live file watching with auto-refresh');
+    console.log('  stats             Detailed statistics report');
+    console.log('  config            Manage palace configuration');
     console.log(chalk.bold('\nLLM-Export Options:'));
     console.log('  --max-tokens, -t  Max tokens per chunk (default: 128000)');
     console.log('  --format, -f      Output format (md|json)');
@@ -766,6 +772,486 @@ const commands = {
       }
       
       console.log(chalk.gray('\n💡 Usage: Copy files to LLM chat context for web browser AIs'));
+      
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
+  // ============================================
+  // NEW COMMANDS (v2.6.0)
+  // ============================================
+
+  diff: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      const targetFile = args.find(a => !a.startsWith('--') && a !== 'diff');
+      
+      if (!targetFile) {
+        console.log(chalk.red('Error: Specify target file'));
+        console.log(chalk.gray('Usage: palace diff <file> [--json]'));
+        console.log(chalk.gray(''));
+        console.log(chalk.gray('Options:'));
+        console.log(chalk.gray('  --json     Output as JSON'));
+        console.log(chalk.gray('  --stat     Show stat-style diff'));
+        process.exit(1);
+      }
+      
+      const options = validateCommand('diff', {
+        target: targetFile,
+        json: args.includes('--json'),
+        stat: args.includes('--stat')
+      });
+      
+      const palace = new Palace(process.cwd());
+      await palace.scan();
+      
+      // Get stored file state
+      const statePath = path.join(process.cwd(), '.palace', 'state', 'current.json');
+      let storedFile = null;
+      
+      if (fs.existsSync(statePath)) {
+        const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+        storedFile = state.files?.find(f => f[0] === targetFile)?.[1];
+      }
+      
+      // Get current file content
+      const currentPath = validatePath(targetFile, { mustExist: true, mustBeFile: true });
+      const currentContent = fs.readFileSync(currentPath, 'utf-8');
+      const currentHash = createHash('sha256').update(currentContent).digest('hex').substring(0, 16);
+      
+      if (!storedFile) {
+        console.log(chalk.yellow('⚠ File not in palace state. Run `palace scan` first.'));
+        console.log(chalk.gray(`  Current size: ${formatSize(currentContent.length)}`));
+        console.log(chalk.gray(`  Current lines: ${currentContent.split('\n').length}`));
+        console.log(chalk.gray(`  Current hash: ${currentHash}`));
+        process.exit(0);
+      }
+      
+      const changes = {
+        file: targetFile,
+        previousHash: storedFile.hash || 'unknown',
+        currentHash,
+        previousSize: storedFile.size || 0,
+        currentSize: currentContent.length,
+        previousLines: storedFile.lines || 0,
+        currentLines: currentContent.split('\n').length,
+        lastScanned: storedFile.lastModified || 'unknown',
+        changed: storedFile.hash !== currentHash
+      };
+      
+      if (options.json) {
+        console.log(JSON.stringify(changes, null, 2));
+        return;
+      }
+      
+      console.log(chalk.cyan('\n📊 File Diff Report:\n'));
+      console.log(chalk.white(`  File: ${targetFile}`));
+      console.log(chalk.gray(`  Last scanned: ${changes.lastScanned}`));
+      console.log(chalk.gray(`  Changed: ${changes.changed ? chalk.red('Yes') : chalk.green('No')}`));
+      console.log('');
+      console.log(chalk.bold('  Comparison:'));
+      console.log(chalk.gray(`    Size:  ${formatSize(changes.previousSize)} → ${formatSize(changes.currentSize)} (${changes.currentSize - changes.previousSize >= 0 ? '+' : ''}${changes.currentSize - changes.previousSize} bytes)`));
+      console.log(chalk.gray(`    Lines: ${changes.previousLines} → ${changes.currentLines} (${changes.currentLines - changes.previousLines >= 0 ? '+' : ''}${changes.currentLines - changes.previousLines})`));
+      console.log(chalk.gray(`    Hash:  ${changes.previousHash} → ${changes.currentHash}`));
+      
+      if (changes.changed) {
+        console.log(chalk.yellow('\n💡 Run `palace refresh ' + targetFile + '` to update palace state.'));
+      }
+      
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
+  watch: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      const options = validateCommand('watch', {
+        path: process.cwd(),
+        interval: parseInt(getArg(['--interval', '-i']) || '1000'),
+        autoRefresh: !args.includes('--no-refresh'),
+        verbose: args.includes('--verbose') || args.includes('-v')
+      });
+      
+      console.log(chalk.cyan('👀 Watching for file changes...\n'));
+      console.log(chalk.gray(`  Path: ${options.path}`));
+      console.log(chalk.gray(`  Interval: ${options.interval}ms`));
+      console.log(chalk.gray(`  Auto-refresh: ${options.autoRefresh}`));
+      console.log(chalk.gray('\n  Press Ctrl+C to stop\n'));
+      
+      const palace = new Palace(options.path);
+      await palace.scan();
+      
+      const fileHashes = new Map();
+      const refresher = new Refresher(palace);
+      
+      // Initial file hashes
+      for (const [filePath, file] of palace.files) {
+        fileHashes.set(filePath, file.hash);
+      }
+      
+      // Watch loop
+      let running = true;
+      const checkInterval = setInterval(async () => {
+        if (!running) return;
+        
+        try {
+          for (const [filePath, oldHash] of fileHashes) {
+            const fullPath = path.join(options.path, filePath);
+            
+            if (!fs.existsSync(fullPath)) {
+              if (options.verbose) {
+                console.log(chalk.yellow(`  [DELETED] ${filePath}`));
+              }
+              fileHashes.delete(filePath);
+              continue;
+            }
+            
+            const content = fs.readFileSync(fullPath, 'utf-8');
+            const newHash = createHash('sha256').update(content).digest('hex').substring(0, 16);
+            
+            if (newHash !== oldHash) {
+              const timestamp = new Date().toLocaleTimeString();
+              console.log(chalk.blue(`  [${timestamp}]`), chalk.green(`[CHANGED] ${filePath}`));
+              
+              fileHashes.set(filePath, newHash);
+              
+              if (options.autoRefresh) {
+                console.log(chalk.gray(`    Refreshing...`));
+                const result = await refresher.refresh(filePath, { dryRun: false });
+                if (result.success) {
+                  console.log(chalk.gray(`    ✓ Updated ${result.updated.length} files`));
+                } else {
+                  console.log(chalk.red(`    ✗ Refresh failed: ${result.errors[0]?.message}`));
+                }
+              }
+            }
+          }
+          
+          // Check for new files
+          const currentFiles = new Set([...fileHashes.keys()]);
+          await palace.scan();
+          
+          for (const [filePath, file] of palace.files) {
+            if (!currentFiles.has(filePath)) {
+              const timestamp = new Date().toLocaleTimeString();
+              console.log(chalk.blue(`  [${timestamp}]`), chalk.yellow(`[NEW] ${filePath}`));
+              fileHashes.set(filePath, file.hash);
+            }
+          }
+          
+        } catch (err) {
+          if (options.verbose) {
+            console.log(chalk.red(`  Watch error: ${err.message}`));
+          }
+        }
+      }, options.interval);
+      
+      // Handle shutdown
+      process.on('SIGINT', () => {
+        running = false;
+        clearInterval(checkInterval);
+        console.log(chalk.gray('\n\n  Watch stopped.'));
+        process.exit(0);
+      });
+      
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
+  stats: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      const options = validateCommand('stats', {
+        path: process.cwd(),
+        json: args.includes('--json'),
+        detailed: args.includes('--detailed') || args.includes('-d')
+      });
+      
+      const palace = new Palace(options.path);
+      const scanResult = await palace.scan();
+      const complexity = await palace.analyzeComplexity();
+      const deps = await palace.analyzeDependencies();
+      const status = await palace.getStatus();
+      
+      // Calculate additional stats
+      const languageStats = {};
+      const fileSizes = [];
+      let totalPatterns = 0;
+      let totalFlows = 0;
+      
+      for (const [filePath, file] of palace.files) {
+        const lang = file.language;
+        languageStats[lang] = (languageStats[lang] || { files: 0, lines: 0, size: 0 });
+        languageStats[lang].files++;
+        languageStats[lang].lines += file.lines;
+        languageStats[lang].size += file.size;
+        fileSizes.push(file.size);
+        totalPatterns += file.patterns?.length || 0;
+        totalFlows += file.flows?.length || 0;
+      }
+      
+      // Calculate percentiles
+      fileSizes.sort((a, b) => a - b);
+      const p50 = fileSizes[Math.floor(fileSizes.length * 0.5)] || 0;
+      const p90 = fileSizes[Math.floor(fileSizes.length * 0.9)] || 0;
+      const p99 = fileSizes[Math.floor(fileSizes.length * 0.99)] || 0;
+      
+      const stats = {
+        project: status.name,
+        generated: new Date().toISOString(),
+        summary: {
+          files: scanResult.files,
+          lines: scanResult.lines,
+          size: scanResult.size,
+          sizeFormatted: formatSize(scanResult.size)
+        },
+        patterns: {
+          detected: totalPatterns,
+          library: palace.patterns.size
+        },
+        flows: {
+          detected: totalFlows,
+          library: palace.flows.size
+        },
+        complexity: {
+          average: parseFloat(complexity.average),
+          max: complexity.max,
+          highComplexityFiles: complexity.highCount
+        },
+        dependencies: {
+          total: deps.total,
+          cycles: deps.cycles
+        },
+        languages: languageStats,
+        fileSizeDistribution: {
+          min: fileSizes[0] || 0,
+          max: fileSizes[fileSizes.length - 1] || 0,
+          median: p50,
+          p90,
+          p99
+        },
+        issues: status.issues
+      };
+      
+      if (options.json) {
+        console.log(JSON.stringify(stats, null, 2));
+        return;
+      }
+      
+      console.log(chalk.cyan('\n📊 Detailed Statistics Report\n'));
+      
+      console.log(chalk.bold('  Project Summary'));
+      console.log(chalk.gray(`    Name: ${stats.project}`));
+      console.log(chalk.gray(`    Files: ${stats.summary.files}`));
+      console.log(chalk.gray(`    Lines: ${stats.summary.lines.toLocaleString()}`));
+      console.log(chalk.gray(`    Size: ${stats.summary.sizeFormatted}`));
+      console.log('');
+      
+      console.log(chalk.bold('  Pattern Detection'));
+      console.log(chalk.gray(`    Detected: ${stats.patterns.detected}`));
+      console.log(chalk.gray(`    In Library: ${stats.patterns.library}`));
+      console.log('');
+      
+      console.log(chalk.bold('  Behavior Flows'));
+      console.log(chalk.gray(`    Detected: ${stats.flows.detected}`));
+      console.log(chalk.gray(`    In Library: ${stats.flows.library}`));
+      console.log('');
+      
+      console.log(chalk.bold('  Complexity Metrics'));
+      console.log(chalk.gray(`    Average: ${stats.complexity.average}`));
+      console.log(chalk.gray(`    Maximum: ${stats.complexity.max}`));
+      console.log(chalk.gray(`    High Complexity Files: ${stats.complexity.highComplexityFiles}`));
+      console.log('');
+      
+      console.log(chalk.bold('  Dependencies'));
+      console.log(chalk.gray(`    Total: ${stats.dependencies.total}`));
+      console.log(chalk.gray(`    Cycles: ${stats.dependencies.cycles}`));
+      if (stats.dependencies.cycles > 0) {
+        console.log(chalk.yellow('    ⚠ Circular dependencies detected'));
+      }
+      console.log('');
+      
+      console.log(chalk.bold('  Languages'));
+      for (const [lang, data] of Object.entries(stats.languages)) {
+        console.log(chalk.gray(`    ${lang}: ${data.files} files, ${data.lines.toLocaleString()} lines, ${formatSize(data.size)}`));
+      }
+      console.log('');
+      
+      if (options.detailed) {
+        console.log(chalk.bold('  File Size Distribution'));
+        console.log(chalk.gray(`    Min: ${formatSize(stats.fileSizeDistribution.min)}`));
+        console.log(chalk.gray(`    Median: ${formatSize(stats.fileSizeDistribution.median)}`));
+        console.log(chalk.gray(`    90th percentile: ${formatSize(stats.fileSizeDistribution.p90)}`));
+        console.log(chalk.gray(`    99th percentile: ${formatSize(stats.fileSizeDistribution.p99)}`));
+        console.log(chalk.gray(`    Max: ${formatSize(stats.fileSizeDistribution.max)}`));
+        console.log('');
+      }
+      
+      console.log(chalk.gray(`  Generated: ${stats.generated}`));
+      
+    } catch (error) {
+      handleError(error);
+    }
+  },
+
+  config: async () => {
+    if (!args.includes('--quiet')) console.log(BANNER);
+    
+    try {
+      const subCommand = args[1] || 'show';
+      const configPath = path.join(process.cwd(), '.palace', 'config.json');
+      
+      const options = validateCommand('config', {
+        action: subCommand,
+        key: getArg(['--key', '-k']),
+        value: getArg(['--value', '-v']),
+        global: args.includes('--global')
+      });
+      
+      switch (subCommand) {
+        case 'show':
+          if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            console.log(chalk.cyan('\n⚙️  Palace Configuration\n'));
+            console.log(JSON.stringify(config, null, 2));
+          } else {
+            console.log(chalk.yellow('No local config found. Run `palace init` first.'));
+          }
+          break;
+          
+        case 'set':
+          if (!options.key || options.value === undefined) {
+            console.log(chalk.red('Error: Specify --key and --value'));
+            console.log(chalk.gray('Usage: palace config set --key <key> --value <value>'));
+            process.exit(1);
+          }
+          
+          let config = {};
+          if (fs.existsSync(configPath)) {
+            config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+          } else {
+            // Ensure directory exists
+            const palaceDir = path.dirname(configPath);
+            if (!fs.existsSync(palaceDir)) {
+              fs.mkdirSync(palaceDir, { recursive: true });
+            }
+          }
+          
+          // Parse value (try JSON, fallback to string)
+          let parsedValue = options.value;
+          try {
+            parsedValue = JSON.parse(options.value);
+          } catch {
+            // Keep as string
+          }
+          
+          // Set nested keys (e.g., "compression.level")
+          const keys = options.key.split('.');
+          let current = config;
+          for (let i = 0; i < keys.length - 1; i++) {
+            if (!current[keys[i]]) {
+              current[keys[i]] = {};
+            }
+            current = current[keys[i]];
+          }
+          current[keys[keys.length - 1]] = parsedValue;
+          
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+          console.log(chalk.green(`✓ Set ${options.key} = ${JSON.stringify(parsedValue)}`));
+          break;
+          
+        case 'get':
+          if (!options.key) {
+            console.log(chalk.red('Error: Specify --key'));
+            console.log(chalk.gray('Usage: palace config get --key <key>'));
+            process.exit(1);
+          }
+          
+          if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            const keys = options.key.split('.');
+            let value = config;
+            for (const k of keys) {
+              value = value?.[k];
+            }
+            
+            if (value !== undefined) {
+              console.log(JSON.stringify(value, null, 2));
+            } else {
+              console.log(chalk.yellow(`Key "${options.key}" not found`));
+            }
+          } else {
+            console.log(chalk.yellow('No config found'));
+          }
+          break;
+          
+        case 'reset':
+          const defaultConfig = {
+            version: '2.6.0',
+            compressionLevel: 3,
+            exclude: ['node_modules', '.git', 'dist', '__pycache__'],
+            maxFileSize: 10485760,
+            patterns: { enabled: true },
+            flows: { enabled: true },
+            export: { format: 'cxml' }
+          };
+          
+          const palaceDir = path.dirname(configPath);
+          if (!fs.existsSync(palaceDir)) {
+            fs.mkdirSync(palaceDir, { recursive: true });
+          }
+          
+          fs.writeFileSync(configPath, JSON.stringify(defaultConfig, null, 2));
+          console.log(chalk.green('✓ Configuration reset to defaults'));
+          break;
+          
+        case 'init':
+          if (fs.existsSync(configPath)) {
+            console.log(chalk.yellow('Config already exists. Use `palace config reset` to reset.'));
+            process.exit(0);
+          }
+          
+          const newConfig = {
+            version: '2.6.0',
+            compressionLevel: 3,
+            exclude: ['node_modules', '.git', 'dist', '__pycache__'],
+            maxFileSize: 10485760,
+            patterns: { enabled: true },
+            flows: { enabled: true },
+            export: { format: 'cxml' }
+          };
+          
+          const newPalaceDir = path.dirname(configPath);
+          if (!fs.existsSync(newPalaceDir)) {
+            fs.mkdirSync(newPalaceDir, { recursive: true });
+          }
+          
+          fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+          console.log(chalk.green('✓ Configuration initialized'));
+          break;
+          
+        default:
+          console.log(chalk.red(`Unknown config action: ${subCommand}`));
+          console.log(chalk.gray('Usage: palace config <show|set|get|reset|init>'));
+          console.log('');
+          console.log(chalk.bold('Config Actions:'));
+          console.log('  show         Display current configuration');
+          console.log('  set          Set a config value');
+          console.log('  get          Get a config value');
+          console.log('  reset        Reset to default configuration');
+          console.log('  init         Initialize new configuration');
+          console.log('');
+          console.log(chalk.bold('Options:'));
+          console.log('  --key, -k    Configuration key (supports dot notation)');
+          console.log('  --value, -v  Value to set');
+          process.exit(1);
+      }
       
     } catch (error) {
       handleError(error);
