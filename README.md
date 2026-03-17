@@ -1,11 +1,11 @@
-# LLMemory-Palace
+# 🧠 LLMemory-Palace
 
 [![npm version](https://img.shields.io/npm/v/llmemory-palace.svg)](https://www.npmjs.com/package/llmemory-palace)
 [![Node CI](https://github.com/Alot1z/LLMemory-palace/actions/workflows/test.yml/badge.svg)](https://github.com/Alot1z/LLMemory-palace/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 
-**[npm](https://www.npmjs.com/package/llmemory-palace)** | **[Docs](./wiki/Home.md)** | **[Roadmap](./ROADMAP.md)** | **[Issues](https://github.com/Alot1z/LLMemory-palace/issues)**
+**[📦 npm](https://www.npmjs.com/package/llmemory-palace)** | **[📖 Docs](./wiki/Home.md)** | **[🗺️ Roadmap](./ROADMAP.md)** | **[🐛 Issues](https://github.com/Alot1z/LLMemory-palace/issues)** | **[💻 GitHub](https://github.com/Alot1z/LLMemory-palace)**
 
 ---
 
@@ -23,7 +23,7 @@ LLMemory-Palace maps your code into a portable format. Not your actual code—a 
 npm install llmemory-palace
 ```
 
-Node.js 18+
+Node.js 18+ | Bun 1.0+
 
 ## Quick Start
 
@@ -133,3 +133,9 @@ const genome = palace.generateGenome();
 ## License
 
 MIT
+
+---
+
+**[⬆ Back to Top](#-llmemory-palace)**
+
+**Links:** [npm](https://www.npmjs.com/package/llmemory-palace) | [GitHub](https://github.com/Alot1z/LLMemory-palace) | [Issues](https://github.com/Alot1z/LLMemory-palace/issues)
