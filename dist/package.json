@@ -1,0 +1,82 @@
+{
+  "name": "llmemory-palace",
+  "version": "3.0.0",
+  "description": "LLMemory-Palace: Code genome system for LLM context transfer. Maps codebases into portable format for LLM understanding. Now with MCP server and reference-based minimal context (90%+ token savings).",
+  "type": "module",
+  "main": "lib/palace.js",
+  "bin": {
+    "palace": "./bin/cli.js"
+  },
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/palace.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./mcp-server": "./mcp-server/index.js",
+    "./genome": "./lib/genome.js",
+    "./genome-safe": "./lib/genome-safe.js",
+    "./cli-validator": "./lib/cli-validator.js",
+    "./patterns": "./lib/patterns.js",
+    "./flows": "./lib/flows.js",
+    "./semantic-hash": "./lib/semantic-hash.js",
+    "./reconstructor": "./lib/reconstructor.js",
+    "./refresh": "./lib/refresh.js",
+    "./refresh-analyzer": "./lib/refresh-analyzer.js",
+    "./state-reducer": "./lib/state-reducer.js",
+    "./scanner-parallel": "./lib/scanner-parallel.js",
+    "./scanner-optimized": "./lib/scanner-optimized.js",
+    "./large-file-handler": "./lib/streaming/large-file-handler.js"
+  },
+  "files": [
+    "lib/",
+    "bin/",
+    "config/",
+    "*.md"
+  ],
+  "scripts": {
+    "start": "node bin/cli.js"
+  },
+  "keywords": [
+    "llm",
+    "context",
+    "code-genome",
+    "cxml",
+    "ai",
+    "code-analysis",
+    "ast",
+    "pattern-library",
+    "behavior-graph",
+    "semantic-hash",
+    "neural-code",
+    "memory-palace",
+    "context-transfer",
+    "security",
+    "input-validation",
+    "safe-parsing"
+  ],
+  "author": "LLMemory-Palace Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alot1z/LLMemory-palace"
+  },
+  "bugs": {
+    "url": "https://github.com/Alot1z/LLMemory-palace/issues"
+  },
+  "homepage": "https://github.com/Alot1z/LLMemory-palace#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "bun": ">=1.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "cors": "^2.8.6",
+    "express": "^4.22.1",
+    "glob": "^10.3.0",
+    "minimatch": "^9.0.0",
+    "zod": "^4.3.6"
+  }
+}

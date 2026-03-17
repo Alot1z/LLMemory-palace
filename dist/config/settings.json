@@ -1,0 +1,29 @@
+{
+  "version": "25.0.0",
+  "compressionLevels": {
+    "1": {
+      "name": "state-only",
+      "description": "Only project state and structure",
+      "includesContent": false
+    },
+    "2": {
+      "name": "structure-deps",
+      "description": "Structure and dependencies",
+      "includesContent": false
+    },
+    "3": {
+      "name": "full-source",
+      "description": "Full source code in CDATA",
+      "includesContent": true
+    },
+    "4": {
+      "name": "max-density-genome",
+      "description": "Ultra-compressed one-line genome",
+      "includesContent": true,
+      "compressed": true
+    }
+  },
+  "defaultLevel": 3,
+  "outputFormats": ["cxml", "json", "genome"],
+  "defaultFormat": "cxml"
+}

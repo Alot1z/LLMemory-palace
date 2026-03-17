@@ -1,0 +1,43 @@
+{
+  "version": "2.6.0",
+  "exportedAt": "2026-03-16T16:59:22.021Z",
+  "totalTokens": 131298,
+  "totalCharacters": 928763,
+  "totalWords": 23388,
+  "chunks": 5,
+  "format": "md",
+  "maxTokens": 50000,
+  "overlap": 200,
+  "files": [
+    {
+      "index": 0,
+      "tokens": 46691,
+      "characters": 294299,
+      "file": "palace-export-1-of-5.md"
+    },
+    {
+      "index": 1,
+      "tokens": 28538,
+      "characters": 181118,
+      "file": "palace-export-2-of-5.md"
+    },
+    {
+      "index": 2,
+      "tokens": 69790,
+      "characters": 539762,
+      "file": "palace-export-3-of-5.md"
+    },
+    {
+      "index": 3,
+      "tokens": 69761,
+      "characters": 539577,
+      "file": "palace-export-4-of-5.md"
+    },
+    {
+      "index": 4,
+      "tokens": 69731,
+      "characters": 539382,
+      "file": "palace-export-5-of-5.md"
+    }
+  ]
+}
