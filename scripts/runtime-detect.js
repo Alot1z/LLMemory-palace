@@ -9,8 +9,9 @@
  *   node runtime-detect.js <script>    # Execute script with detected runtime
  */
 
-const { execSync, spawnSync, existsSync } = require('fs');
-const { platform } = require('os');
+import { execSync, spawnSync } from 'child_process';
+import { existsSync } from 'fs';
+import { platform } from 'os';
 
 // Detect available runtimes
 function detectRuntime() {
@@ -38,7 +39,6 @@ function detectRuntime() {
 
 function checkBun() {
   try {
-    // Check if bun is in PATH
     const result = spawnSync(platform === 'win32' ? 'bun.cmd' : 'bun', ['--version'], {
       encoding: 'utf8',
       timeout: 5000
@@ -52,9 +52,9 @@ function checkBun() {
 function getBunVersion() {
   try {
     const result = execSync(platform === 'win32' ? 'bun.cmd --version' : 'bun --version', {
-        encoding: 'utf8',
-        timeout: 5000
-      });
+      encoding: 'utf8',
+      timeout: 5000
+    });
     return result.trim();
   } catch {
     return 'unknown';
@@ -69,7 +69,6 @@ const scriptArgs = process.argv.slice(3);
 const detected = detectRuntime();
 
 if (!scriptArg) {
-  // Just print detection info
   console.log('═'.repeat(60));
   console.log('  LLMemory-Palace Runtime Detection');
   console.log('═'.repeat(60));
