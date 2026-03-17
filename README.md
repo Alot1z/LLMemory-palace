@@ -7,7 +7,15 @@
 
 **[npm](https://www.npmjs.com/package/llmemory-palace)** | **[Docs](./wiki/Home.md)** | **[Roadmap](./ROADMAP.md)** | **[Issues](https://github.com/Alot1z/LLMemory-palace/issues)**
 
-Maps codebases into portable format for LLM context transfer. Patterns, flows, fingerprints—one string replaces dozens of file pastes.
+---
+
+## The Problem
+
+You're working with Claude or ChatGPT. You paste your codebase files one by one. The context fills up. The AI forgets what it saw first. You explain again. Context overflows. You start over.
+
+## The Solution
+
+LLMemory-Palace maps your code into a portable format. Not your actual code—a structural map. Patterns, flows, fingerprints. One string replaces dozens of file pastes.
 
 ## Install
 
@@ -42,9 +50,9 @@ npx palace genome
 | `deps` | Analyze dependencies |
 | `status` | Show current state |
 | `query` | Interactive LLM query |
-| `validate` | Security check |
+| `validate` | Security check genome |
 
-## v1.1.0
+## v1.1.0 Features
 
 ### AI Integration
 ```javascript
@@ -58,7 +66,7 @@ prompts.formatForLLM('claude', query);
 - MessagePack (binary serialization)
 - JSON (default)
 
-### Streaming
+### Large Files
 ```javascript
 import { LargeFileHandler } from 'llmemory-palace/streaming';
 const handler = new LargeFileHandler({ chunkSize: 1024 * 1024 });
@@ -114,13 +122,13 @@ const genome = palace.generateGenome();
 
 ## Documentation
 
-- [Palace](./wiki/Palace.md) — Main class
-- [PatternLibrary](./wiki/PatternLibrary.md) — Templates
-- [BehaviorGraph](./wiki/BehaviorGraph.md) — Flows
-- [SemanticHash](./wiki/SemanticHash.md) — Fingerprints
-- [Genome](./wiki/Genome.md) — Encoder/Decoder
-- [CLI Validator](./wiki/CLI-Validator.md) — Security
-- [Safe Parser](./wiki/Genome-Safe.md) — Safe parsing
+- [Palace](./wiki/Palace.md)
+- [PatternLibrary](./wiki/PatternLibrary.md)
+- [BehaviorGraph](./wiki/BehaviorGraph.md)
+- [SemanticHash](./wiki/SemanticHash.md)
+- [Genome](./wiki/Genome.md)
+- [CLI Validator](./wiki/CLI-Validator.md)
+- [Safe Parser](./wiki/Genome-Safe.md)
 
 ## License
 
